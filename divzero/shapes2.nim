@@ -8,7 +8,7 @@ type Rectangle* = object
 
 # --------------------------------------------------------------------------------------------------
 
-proc rectangle*(x, y, w, h: F32): Rectangle {.inline.} =
+proc rectangle*(x, y, w, h: float32): Rectangle {.inline.} =
   result.pos.x = x
   result.pos.y = y
   result.size.x = w
@@ -37,27 +37,27 @@ proc bottom_right*(rect: Rectangle): Vec2 {.inline.} =
   result = rect.pos + rect.size - vec2(1, 1)
 
 
-proc left*(rect: Rectangle): F32 {.inline.} =
+proc left*(rect: Rectangle): float32 {.inline.} =
   result = rect.pos.x
 
 
-proc right*(rect: Rectangle): F32 {.inline.} =
+proc right*(rect: Rectangle): float32 {.inline.} =
   result = rect.pos.x + rect.size.x
 
 
-proc top*(rect: Rectangle): F32 {.inline.} =
+proc top*(rect: Rectangle): float32 {.inline.} =
   result = rect.pos.y
 
 
-proc bottom*(rect: Rectangle): F32 {.inline.} =
+proc bottom*(rect: Rectangle): float32 {.inline.} =
   result = rect.pos.y + rect.size.y
 
 
-proc width*(rect: Rectangle): F32 {.inline.} =
+proc width*(rect: Rectangle): float32 {.inline.} =
   result = rect.size.x
 
 
-proc height*(rect: Rectangle): F32 {.inline.} =
+proc height*(rect: Rectangle): float32 {.inline.} =
   result = rect.size.y
 
 # --------------------------------------------------------------------------------------------------
@@ -93,50 +93,50 @@ proc offset*(a: Rectangle; pos: Vec2): Rectangle {.inline.} =
   result.size = a.size
 
 
-proc offset*(a: Rectangle; x, y: F32): Rectangle {.inline.} =
+proc offset*(a: Rectangle; x, y: float32): Rectangle {.inline.} =
   result.pos.x = a.pos.x + x
   result.pos.y = a.pos.y + y
   result.size = a.size
 
 
-proc offset_x*(a: Rectangle; size: F32): Rectangle {.inline.} =
+proc offset_x*(a: Rectangle; size: float32): Rectangle {.inline.} =
   result.pos = a.pos + vec2(size, 0)
   result.size = a.size
 
 
-proc offset_y*(a: Rectangle; size: F32): Rectangle {.inline.} =
+proc offset_y*(a: Rectangle; size: float32): Rectangle {.inline.} =
   result.pos = a.pos + vec2(0, size)
   result.size = a.size
 
 
-proc resize*(a: Rectangle; size: Size): Rectangle {.inline.} =
+proc resize*(a: Rectangle; size: Vec2): Rectangle {.inline.} =
   result.pos = a.pos
   result.size = size
 
 
-proc resize*(a: Rectangle; x, y: F32): Rectangle {.inline.} =
+proc resize*(a: Rectangle; x, y: float32): Rectangle {.inline.} =
   result.pos = a.pos
   result.size = vec2(x, y)
 
 
-proc resize_x*(a: Rectangle; size: F32): Rectangle {.inline.} =
+proc resize_x*(a: Rectangle; size: float32): Rectangle {.inline.} =
   result.pos = a.pos
   result.size.x = size
   result.size.y = a.size.y
 
 
-proc resize_y*(a: Rectangle; size: F32): Rectangle {.inline.} =
+proc resize_y*(a: Rectangle; size: float32): Rectangle {.inline.} =
   result.pos = a.pos
   result.size.x = a.size.x
   result.size.y = size
 
 
-proc scale*(a: Rectangle; size: Size): Rectangle {.inline.} =
+proc scale*(a: Rectangle; size: Vec2): Rectangle {.inline.} =
   result.pos = a.pos
   result.size = a.size + size
 
 
-proc scale*(a: Rectangle; x, y: F32): Rectangle {.inline.} =
+proc scale*(a: Rectangle; x, y: float32): Rectangle {.inline.} =
   result.pos = a.pos
   result.size.x = a.size.x + x
   result.size.y = a.size.y + y
@@ -147,39 +147,39 @@ proc inflate*(a: Rectangle; size: Vec2): Rectangle {.inline.} =
   result.size = a.size + size
 
 
-proc inflate*(a: Rectangle; x, y: F32): Rectangle {.inline.} =
+proc inflate*(a: Rectangle; x, y: float32): Rectangle {.inline.} =
   let size = vec2(x, y)
   result.pos  = a.pos  - size / 2
   result.size = a.size + size
 
 
-proc set_x*(a: Rectangle; x: F32): Rectangle =
+proc set_x*(a: Rectangle; x: float32): Rectangle =
   result.pos = a.pos
   result.size = a.size
   result.pos.x = x
 
 
-proc set_y*(a: Rectangle; y: F32): Rectangle =
+proc set_y*(a: Rectangle; y: float32): Rectangle =
   result.pos = a.pos
   result.size = a.size
   result.pos.y = y
 
 # --------------------------------------------------------------------------------------------------
 
-proc left_border*(a: Rectangle; width: F32): Rectangle =
+proc left_border*(a: Rectangle; width: float32): Rectangle =
   result.pos = a.pos
   result.size.x = width
   result.size.y = a.size.y
 
 
-proc right_border*(a: Rectangle; width: F32): Rectangle =
+proc right_border*(a: Rectangle; width: float32): Rectangle =
   result.pos.x = a.pos.x + a.size.x - width
   result.pos.y = a.pos.y
   result.size.x = width
   result.size.y = a.size.y
 
 
-proc bottom_border*(a: Rectangle; width: F32): Rectangle =
+proc bottom_border*(a: Rectangle; width: float32): Rectangle =
   result.pos.x = a.pos.x
   result.pos.y = a.pos.y + a.size.y - width
   result.size.x = a.size.x
@@ -187,7 +187,7 @@ proc bottom_border*(a: Rectangle; width: F32): Rectangle =
 
 # --------------------------------------------------------------------------------------------------
 
-proc split2_horz_pixels*(a: Rectangle; split_pos: F32): (Rectangle, Rectangle) =
+proc split2_horz_pixels*(a: Rectangle; split_pos: float32): (Rectangle, Rectangle) =
   result[0].pos.x  = a.pos.x
   result[0].pos.y  = a.pos.y
   result[0].size.x = split_pos
