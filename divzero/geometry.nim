@@ -3,7 +3,8 @@ import divzero / [aabb3]
 # --------------------------------------------------------------------------------------------------
 
 type GeometryFormat* {.pure.} = enum
-  VN, VNT, VNTB
+  VN3, VNT3, VNTB3
+  VT2
 
 
 type GeometrySurface* = object
