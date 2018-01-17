@@ -26,15 +26,15 @@ proc top_left*(rect: Rectangle): Vec2 {.inline.} =
 
 
 proc bottom_left*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos; result.y += rect.size.y - 1
+  result = rect.pos; result.y += rect.size.y
 
 
 proc top_right*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos; result.x += rect.size.x - 1
+  result = rect.pos; result.x += rect.size.x
 
 
 proc bottom_right*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos + rect.size - vec2(1, 1)
+  result = rect.pos + rect.size
 
 
 proc left*(rect: Rectangle): float32 {.inline.} =
