@@ -207,3 +207,10 @@ type Circle* = object
 
 type Ray2* = object
   origin*, direction*: Vec2
+
+# --------------------------------------------------------------------------------------------------
+
+proc rectangle_vs_rectangle*(a: Rectangle; b: Rectangle): bool =
+  let over_x = (a.left < b.right) and (a.right > b.left)
+  let over_y = (a.top < b.bottom) and (a.bottom > b.top)
+  result = over_x and over_y
