@@ -200,8 +200,8 @@ proc split2_horz_pixels*(a: Rectangle; split_pos: float32): (Rectangle, Rectangl
 # --------------------------------------------------------------------------------------------------
 
 type Circle* = object
-  pos: Vec2
-  radius: float32
+  pos*: Vec2
+  radius*: float32
 
 # --------------------------------------------------------------------------------------------------
 
@@ -210,7 +210,41 @@ type Ray2* = object
 
 # --------------------------------------------------------------------------------------------------
 
+type Plane2* = object
+  normal*: Vec2
+  dist*: float32
+
+# --------------------------------------------------------------------------------------------------
+
+proc plane2*(normal: Vec2; dist: float32): Plane2 =
+  result.normal = normal
+  result.dist = dist
+
+
+proc plane2*(normal, origin: Vec2): Plane2 =
+  result.normal = normal
+  result.dist = dot(normal, origin)
+
+
+proc distance*(plane: Plane2; point: Vec2): float32 =
+  ## returns distance from the point to the plane
+  result = dot(plane.normal, point)
+
+
+proc point_inside_convex*(planes: open_array[Plane2]; point: Vec2): bool =
+  result = true
+  for plane in planes:
+    if distance(plane, point) - plane.dist > 0:
+      return false
+
+# --------------------------------------------------------------------------------------------------
+
 proc rectangle_vs_rectangle*(a: Rectangle; b: Rectangle): bool =
   let over_x = (a.left < b.right) and (a.right > b.left)
   let over_y = (a.top < b.bottom) and (a.bottom > b.top)
   result = over_x and over_y
+
+
+proc circle_vs_circle*(a: Circle; b: Circle): bool =
+  let r2 = a.radius + b.radius
+  result = distance_sq(a.pos, b.pos) <= (r2 * r2)

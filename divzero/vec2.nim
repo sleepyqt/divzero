@@ -186,7 +186,7 @@ proc dot*(a, b: Vec2): float32 =
 
 
 proc cross*(a, b: Vec2): float32 =
-  ## returns the cross product of two vectors
+  ## returns the magnitude if cross product of two vectors
   result = a.x * b.y - a.y * b.x
 
 # --------------------------------------------------------------------------------------------------
@@ -233,3 +233,11 @@ proc ceil*(a: Vec2): Vec2 {.inline.} =
 
 # --------------------------------------------------------------------------------------------------
 
+proc left(a: Vec2): Vec2 {.inline.} =
+  result = vec2(-a.y, a.x)
+
+
+proc right(a: Vec2): Vec2 {.inline.} =
+  result = vec2(a.y, -a.x)
+
+# --------------------------------------------------------------------------------------------------
