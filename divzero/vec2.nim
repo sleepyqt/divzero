@@ -233,11 +233,13 @@ proc ceil*(a: Vec2): Vec2 {.inline.} =
 
 # --------------------------------------------------------------------------------------------------
 
-proc left(a: Vec2): Vec2 {.inline.} =
+proc left*(a: Vec2): Vec2 {.inline.} =
+  ## return vector rotated by -90 degrees
   result = vec2(-a.y, a.x)
 
 
-proc right(a: Vec2): Vec2 {.inline.} =
+proc right*(a: Vec2): Vec2 {.inline.} =
+  ## return vector rotated by 90 degrees
   result = vec2(a.y, -a.x)
 
 # --------------------------------------------------------------------------------------------------

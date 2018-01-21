@@ -210,6 +210,11 @@ type Ray2* = object
 
 # --------------------------------------------------------------------------------------------------
 
+type Edge* = object
+  p0*, p1*: Vec2
+
+# --------------------------------------------------------------------------------------------------
+
 type Plane2* = object
   normal*: Vec2
   dist*: float32
@@ -226,6 +231,28 @@ proc plane2*(normal, origin: Vec2): Plane2 =
   result.dist = dot(normal, origin)
 
 
+proc plane2_cw*(a, b: Vec2): Plane2 =
+  ## build plane from two points
+  result.normal = direction(a, b).right()
+  result.dist = dot(result.normal, a)
+
+
+proc plane2_ccw*(a, b: Vec2): Plane2 =
+  ## build plane from two points
+  result.normal = direction(a, b).left()
+  result.dist = dot(result.normal, a)
+
+
+proc plane2_cw*(edge: Edge): Plane2 =
+  result.normal = direction(edge.p0, edge.p1).right()
+  result.dist   = dot(result.normal, edge.p0)
+
+
+proc plane2_ccw*(edge: Edge): Plane2 =
+  result.normal = direction(edge.p0, edge.p1).left()
+  result.dist   = dot(result.normal, edge.p0)
+
+
 proc distance*(plane: Plane2; point: Vec2): float32 =
   ## returns distance from the point to the plane
   result = dot(plane.normal, point)
@@ -234,6 +261,22 @@ proc distance*(plane: Plane2; point: Vec2): float32 =
 proc point_inside_convex*(planes: open_array[Plane2]; point: Vec2): bool =
   result = true
   for plane in planes:
+    if distance(plane, point) - plane.dist > 0:
+      return false
+
+
+iterator edges*(points: open_array[Vec2]): Edge =
+  let L = len(points)
+  for i in 0 ..< L:
+    let i0 = i
+    let i1 = (i + 1) mod L
+    yield Edge(p0: points[i0], p1: points[i1])
+
+
+proc point_inside_convex*(points: open_array[Vec2]; point: Vec2): bool =
+  result = true
+  for edge in points.edges:
+    let plane = plane2_cw(edge)
     if distance(plane, point) - plane.dist > 0:
       return false
 
@@ -248,3 +291,9 @@ proc rectangle_vs_rectangle*(a: Rectangle; b: Rectangle): bool =
 proc circle_vs_circle*(a: Circle; b: Circle): bool =
   let r2 = a.radius + b.radius
   result = distance_sq(a.pos, b.pos) <= (r2 * r2)
+
+# --------------------------------------------------------------------------------------------------
+
+type ConvexHull* = object
+  points*: seq[Vec2]
+
