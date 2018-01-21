@@ -63,12 +63,6 @@ proc height*(rect: Rectangle): float32 {.inline.} =
 
 # --------------------------------------------------------------------------------------------------
 
-proc contains*(rect: Rectangle; point: Vec2): bool =
-  (point.x >= rect.pos.x) and (point.y >= rect.pos.y) and
-    (point.x < (rect.pos.x + rect.size.x)) and (point.y < (rect.pos.y + rect.size.y))
-
-# --------------------------------------------------------------------------------------------------
-
 proc union*(a, b: Rectangle): Rectangle =
   result.pos.x = min(a.pos.x, b.pos.x)
   result.pos.y = min(a.pos.y, b.pos.y)
@@ -239,23 +233,23 @@ proc plane2*(normal, origin: Vec2): Plane2 =
 
 proc plane2_cw*(a, b: Vec2): Plane2 =
   ## build plane from two points
-  result.normal = direction(a, b).right()
+  result.normal = direction(a, b).left()
   result.dist = dot(result.normal, a)
 
 
 proc plane2_ccw*(a, b: Vec2): Plane2 =
   ## build plane from two points
-  result.normal = direction(a, b).left()
+  result.normal = direction(a, b).right()
   result.dist = dot(result.normal, a)
 
 
 proc plane2_cw*(edge: Edge): Plane2 =
-  result.normal = direction(edge.p0, edge.p1).right()
+  result.normal = direction(edge.p0, edge.p1).left()
   result.dist   = dot(result.normal, edge.p0)
 
 
 proc plane2_ccw*(edge: Edge): Plane2 =
-  result.normal = direction(edge.p0, edge.p1).left()
+  result.normal = direction(edge.p0, edge.p1).right()
   result.dist   = dot(result.normal, edge.p0)
 
 
@@ -268,13 +262,6 @@ proc center*(plane: Plane2): Vec2 =
   result = plane.normal * plane.dist
 
 
-proc point_inside_convex*(planes: open_array[Plane2]; point: Vec2): bool =
-  result = true
-  for plane in planes:
-    if distance(plane, point) - plane.dist > 0:
-      return false
-
-
 iterator edges*(points: open_array[Vec2]): Edge =
   let L = len(points)
   for i in 0 ..< L:
@@ -282,8 +269,37 @@ iterator edges*(points: open_array[Vec2]): Edge =
     let i1 = (i + 1) mod L
     yield Edge(p0: points[i0], p1: points[i1])
 
+# --------------------------------------------------------------------------------------------------
 
-proc point_inside_convex*(points: open_array[Vec2]; point: Vec2): bool =
+type CollisionInfo* = object
+  hit*: bool
+  normal*: Vec2
+  depth*: float32
+  a*, b*: Vec2
+
+# --------------------------------------------------------------------------------------------------
+
+proc is_inside*(circle: Circle; point: Vec2): bool =
+  result = distance_sq(circle.pos, point) < circle.radius * circle.radius
+
+
+proc is_inside*(circle: Circle; m: Mat3; point: Vec2): bool =
+  result = distance_sq(m * circle.pos, point) < circle.radius * circle.radius
+
+
+proc is_inside*(rect: Rectangle; point: Vec2): bool =
+  (point.x >= rect.pos.x) and (point.y >= rect.pos.y) and
+    (point.x < (rect.pos.x + rect.size.x)) and (point.y < (rect.pos.y + rect.size.y))
+
+
+proc is_inside*(planes: open_array[Plane2]; point: Vec2): bool =
+  result = true
+  for plane in planes:
+    if distance(plane, point) - plane.dist > 0:
+      return false
+
+
+proc is_inside*(points: open_array[Vec2]; point: Vec2): bool =
   result = true
   for edge in points.edges:
     let plane = plane2_cw(edge)
@@ -292,22 +308,17 @@ proc point_inside_convex*(points: open_array[Vec2]; point: Vec2): bool =
 
 # --------------------------------------------------------------------------------------------------
 
-type CollisionInfo* = object
-  hit*: bool
-  normal*: Vec2
-  depth*: float32
-
-
-proc rectangle_vs_rectangle*(a: Rectangle; b: Rectangle): bool =
+proc is_overlaps*(a: Rectangle; b: Rectangle): bool =
   let over_x = (a.left < b.right) and (a.right > b.left)
   let over_y = (a.top < b.bottom) and (a.bottom > b.top)
   result = over_x and over_y
 
 
-proc circle_vs_circle*(a: Circle; b: Circle): bool =
+proc is_overlaps*(a: Circle; b: Circle): bool =
   let r2 = a.radius + b.radius
   result = distance_sq(a.pos, b.pos) < (r2 * r2)
 
+# --------------------------------------------------------------------------------------------------
 
 proc circle_vs_circle*(a: Circle; b: Circle; info: var CollisionInfo) =
   let r2 = a.radius + b.radius
@@ -326,7 +337,7 @@ proc convex_vs_convex*(a, b: open_array[Vec2]): bool =
     var all_out = true
 
     for point in b:
-      if distance(plane, point) < 0:
+      if distance(plane, point) > 0:
         all_out = false
         break
 
@@ -340,13 +351,53 @@ proc convex_vs_convex*(a, b: open_array[Vec2]): bool =
       var all_out = true
 
       for point in a:
-        if distance(plane, point) < 0:
+        if distance(plane, point) > 0:
           all_out = false
           break
 
       if all_out:
         result = false
         break
+
+
+proc convex_vs_convex*(a, b: open_array[Vec2]; info: var CollisionInfo) =
+  info.hit = true
+
+  var closest = high float32
+
+  for edge in edges(a):
+    let plane = plane2_cw(edge)
+
+    var a_max_proj = low  float32
+    var a_min_proj = high float32
+    var b_max_proj = low  float32
+    var b_min_proj = high float32
+
+    for point in a:
+      let proj = dot(plane.normal, point)
+      if proj < a_min_proj: a_min_proj = proj
+      if proj > a_max_proj: a_max_proj = proj
+
+    for point in b:
+      let proj = dot(plane.normal, point)
+      if proj < b_min_proj: b_min_proj = proj
+      if proj > b_max_proj: b_max_proj = proj
+
+    let test_a = a_min_proj - b_max_proj
+    let test_b = b_min_proj - a_max_proj
+
+    if (test_a > 0) or (test_b > 0):
+      info.hit = false
+      return
+
+    let dist = -(b_max_proj - a_min_proj)
+
+    if abs(dist) < closest:
+      info.depth = dist
+      info.normal = plane.normal
+      info.a = edge.p0
+      info.b = edge.p1
+      closest = abs(dist)
 
 # --------------------------------------------------------------------------------------------------
 
