@@ -243,3 +243,12 @@ proc right*(a: Vec2): Vec2 {.inline.} =
   result = vec2(a.y, -a.x)
 
 # --------------------------------------------------------------------------------------------------
+
+proc low*(a: typedesc[Vec2]): Vec2 =
+  result.x = low(float32)
+  result.y = low(float32)
+
+
+proc high*(a: typedesc[Vec2]): Vec2 =
+  result.x = high(float32)
+  result.y = high(float32)

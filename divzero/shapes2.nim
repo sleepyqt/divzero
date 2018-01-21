@@ -1,4 +1,5 @@
-import divzero / [vec2]
+import divzero / [vec2, mat3]
+import math
 
 # --------------------------------------------------------------------------------------------------
 
@@ -255,7 +256,11 @@ proc plane2_ccw*(edge: Edge): Plane2 =
 
 proc distance*(plane: Plane2; point: Vec2): float32 =
   ## returns distance from the point to the plane
-  result = dot(plane.normal, point)
+  result = dot(plane.normal, point) - plane.dist
+
+
+proc center*(plane: Plane2): Vec2 =
+  result = plane.normal * plane.dist
 
 
 proc point_inside_convex*(planes: open_array[Plane2]; point: Vec2): bool =
@@ -277,7 +282,7 @@ proc point_inside_convex*(points: open_array[Vec2]; point: Vec2): bool =
   result = true
   for edge in points.edges:
     let plane = plane2_cw(edge)
-    if distance(plane, point) - plane.dist > 0:
+    if distance(plane, point) > 0:
       return false
 
 # --------------------------------------------------------------------------------------------------
@@ -292,8 +297,53 @@ proc circle_vs_circle*(a: Circle; b: Circle): bool =
   let r2 = a.radius + b.radius
   result = distance_sq(a.pos, b.pos) <= (r2 * r2)
 
+
+proc convex_vs_convex*(a, b: open_array[Vec2]): bool =
+  result = true
+
+  for edge in edges(a):
+    let plane = plane2_cw(edge)
+    var all_out = true
+
+    for point in b:
+      if distance(plane, point) < 0:
+        all_out = false
+        break
+
+    if all_out:
+      result = false
+      break
+
+  if result:
+    for edge in edges(b):
+      let plane = plane2_cw(edge)
+      var all_out = true
+
+      for point in a:
+        if distance(plane, point) < 0:
+          all_out = false
+          break
+
+      if all_out:
+        result = false
+        break
+
 # --------------------------------------------------------------------------------------------------
 
 type ConvexHull* = object
   points*: seq[Vec2]
 
+
+proc `*`*(m: Mat3; hull: ConvexHull): ConvexHull =
+  result.points = new_seq[Vec2](len(hull.points))
+  for i, point in hull.points:
+    result.points[i] = m * point
+
+
+proc point_cloud_size*(points: open_array[Vec2]): Vec2 =
+  var maxp = low(Vec2)
+  var minp = high(Vec2)
+  for point in points:
+    maxp = max(maxp, point)
+    minp = min(minp, point)
+  result = maxp - minp
