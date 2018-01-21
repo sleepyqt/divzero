@@ -275,31 +275,30 @@ type CollisionInfo* = object
   hit*: bool
   normal*: Vec2
   depth*: float32
-  a*, b*: Vec2
 
 # --------------------------------------------------------------------------------------------------
 
-proc is_inside*(circle: Circle; point: Vec2): bool =
+proc inside*(circle: Circle; point: Vec2): bool =
   result = distance_sq(circle.pos, point) < circle.radius * circle.radius
 
 
-proc is_inside*(circle: Circle; m: Mat3; point: Vec2): bool =
+proc inside*(circle: Circle; m: Mat3; point: Vec2): bool =
   result = distance_sq(m * circle.pos, point) < circle.radius * circle.radius
 
 
-proc is_inside*(rect: Rectangle; point: Vec2): bool =
+proc inside*(rect: Rectangle; point: Vec2): bool =
   (point.x >= rect.pos.x) and (point.y >= rect.pos.y) and
     (point.x < (rect.pos.x + rect.size.x)) and (point.y < (rect.pos.y + rect.size.y))
 
 
-proc is_inside*(planes: open_array[Plane2]; point: Vec2): bool =
+proc inside*(planes: open_array[Plane2]; point: Vec2): bool =
   result = true
   for plane in planes:
     if distance(plane, point) - plane.dist < 0:
       return false
 
 
-proc is_inside*(points: open_array[Vec2]; point: Vec2): bool =
+proc inside*(points: open_array[Vec2]; point: Vec2): bool =
   result = true
   for edge in points.edges:
     let plane = plane2_cw(edge)
@@ -308,19 +307,19 @@ proc is_inside*(points: open_array[Vec2]; point: Vec2): bool =
 
 # --------------------------------------------------------------------------------------------------
 
-proc is_overlaps*(a: Rectangle; b: Rectangle): bool =
+proc overlaps*(a: Rectangle; b: Rectangle): bool =
   let over_x = (a.left < b.right) and (a.right > b.left)
   let over_y = (a.top < b.bottom) and (a.bottom > b.top)
   result = over_x and over_y
 
 
-proc is_overlaps*(a: Circle; b: Circle): bool =
+proc overlaps*(a: Circle; b: Circle): bool =
   let r2 = a.radius + b.radius
   result = distance_sq(a.pos, b.pos) < (r2 * r2)
 
 # --------------------------------------------------------------------------------------------------
 
-proc circle_vs_circle*(a: Circle; b: Circle; info: var CollisionInfo) =
+proc overlaps*(a: Circle; b: Circle; info: var CollisionInfo) =
   let r2 = a.radius + b.radius
   let ds = distance_sq(a.pos, b.pos)
   info.hit = ds < (r2 * r2)
@@ -329,56 +328,26 @@ proc circle_vs_circle*(a: Circle; b: Circle; info: var CollisionInfo) =
     info.normal = direction(a.pos, b.pos)
 
 
-proc convex_vs_convex*(a, b: open_array[Vec2]): bool =
-  result = true
-
-  for edge in edges(a):
-    let plane = plane2_cw(edge)
-    var all_out = true
-
-    for point in b:
-      if distance(plane, point) > 0:
-        all_out = false
-        break
-
-    if all_out:
-      result = false
-      break
-
-  if result:
-    for edge in edges(b):
-      let plane = plane2_cw(edge)
-      var all_out = true
-
-      for point in a:
-        if distance(plane, point) > 0:
-          all_out = false
-          break
-
-      if all_out:
-        result = false
-        break
-
-
-proc convex_vs_convex*(a, b: open_array[Vec2]; info: var CollisionInfo) =
+proc overlaps*(a_points, b_points: open_array[Vec2]; info: var CollisionInfo) =
   info.hit = true
 
   var closest = high float32
 
-  for edge in edges(a):
+  for edge in edges(a_points):
     let plane = plane2_cw(edge)
 
     var a_max_proj = low  float32
     var a_min_proj = high float32
-    var b_max_proj = low  float32
-    var b_min_proj = high float32
 
-    for point in a:
+    for point in a_points:
       let proj = dot(plane.normal, point)
       if proj < a_min_proj: a_min_proj = proj
       if proj > a_max_proj: a_max_proj = proj
 
-    for point in b:
+    var b_max_proj = low  float32
+    var b_min_proj = high float32
+
+    for point in b_points:
       let proj = dot(plane.normal, point)
       if proj < b_min_proj: b_min_proj = proj
       if proj > b_max_proj: b_max_proj = proj
@@ -395,20 +364,18 @@ proc convex_vs_convex*(a, b: open_array[Vec2]; info: var CollisionInfo) =
     if abs(dist) < closest:
       info.depth = dist
       info.normal = plane.normal
-      info.a = edge.p0
-      info.b = edge.p1
       closest = abs(dist)
 
 # --------------------------------------------------------------------------------------------------
 
-type ConvexHull* = object
-  points*: seq[Vec2]
+proc `*`*(m: Mat3; hull: open_array[Vec2]): seq[Vec2] =
+  result = new_seq[Vec2](len(hull))
+  for i, point in hull: result[i] = m * point
 
 
-proc `*`*(m: Mat3; hull: ConvexHull): ConvexHull =
-  result.points = new_seq[Vec2](len(hull.points))
-  for i, point in hull.points:
-    result.points[i] = m * point
+proc transform*(m: Mat3; hull: open_array[Vec2]; dest: var open_array[Vec2]) =
+  for i in 0 ..< len(hull):
+    dest[i] = m * hull[i]
 
 
 proc point_cloud_size*(points: open_array[Vec2]): Vec2 =
