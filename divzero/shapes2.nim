@@ -204,6 +204,11 @@ type Circle* = object
   pos*: Vec2
   radius*: float32
 
+
+proc circle*(pos: Vec2; radius: float32): Circle =
+  result.pos = pos
+  result.radius = radius
+
 # --------------------------------------------------------------------------------------------------
 
 type Ray2* = object
@@ -287,6 +292,12 @@ proc point_inside_convex*(points: open_array[Vec2]; point: Vec2): bool =
 
 # --------------------------------------------------------------------------------------------------
 
+type CollisionInfo* = object
+  hit*: bool
+  normal*: Vec2
+  depth*: float32
+
+
 proc rectangle_vs_rectangle*(a: Rectangle; b: Rectangle): bool =
   let over_x = (a.left < b.right) and (a.right > b.left)
   let over_y = (a.top < b.bottom) and (a.bottom > b.top)
@@ -295,7 +306,16 @@ proc rectangle_vs_rectangle*(a: Rectangle; b: Rectangle): bool =
 
 proc circle_vs_circle*(a: Circle; b: Circle): bool =
   let r2 = a.radius + b.radius
-  result = distance_sq(a.pos, b.pos) <= (r2 * r2)
+  result = distance_sq(a.pos, b.pos) < (r2 * r2)
+
+
+proc circle_vs_circle*(a: Circle; b: Circle; info: var CollisionInfo) =
+  let r2 = a.radius + b.radius
+  let ds = distance_sq(a.pos, b.pos)
+  info.hit = ds < (r2 * r2)
+  if info.hit:
+    info.depth  = r2 - sqrt(ds)
+    info.normal = direction(a.pos, b.pos)
 
 
 proc convex_vs_convex*(a, b: open_array[Vec2]): bool =
