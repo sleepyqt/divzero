@@ -295,7 +295,7 @@ proc is_inside*(rect: Rectangle; point: Vec2): bool =
 proc is_inside*(planes: open_array[Plane2]; point: Vec2): bool =
   result = true
   for plane in planes:
-    if distance(plane, point) - plane.dist > 0:
+    if distance(plane, point) - plane.dist < 0:
       return false
 
 
@@ -303,7 +303,7 @@ proc is_inside*(points: open_array[Vec2]; point: Vec2): bool =
   result = true
   for edge in points.edges:
     let plane = plane2_cw(edge)
-    if distance(plane, point) > 0:
+    if distance(plane, point) < 0:
       return false
 
 # --------------------------------------------------------------------------------------------------
