@@ -23,19 +23,19 @@ proc rectangle*(pos, size: Vec2): Rectangle {.inline.} =
 # --------------------------------------------------------------------------------------------------
 
 proc top_left*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos
-
-
-proc bottom_left*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos; result.y += rect.size.y
+  result = rect.pos + vec2(0f, rect.size.y)
 
 
 proc top_right*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos; result.x += rect.size.x
+  result = rect.pos + rect.size
+
+
+proc bottom_left*(rect: Rectangle): Vec2 {.inline.} =
+  result = rect.pos
 
 
 proc bottom_right*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos + rect.size
+  result = rect.pos + vec2(rect.size.x, 0f)
 
 
 proc left*(rect: Rectangle): float32 {.inline.} =
@@ -294,7 +294,7 @@ proc inside*(rect: Rectangle; point: Vec2): bool =
 proc inside*(planes: open_array[Plane2]; point: Vec2): bool =
   result = true
   for plane in planes:
-    if distance(plane, point) - plane.dist < 0:
+    if distance(plane, point) < 0:
       return false
 
 
@@ -304,6 +304,30 @@ proc inside*(points: open_array[Vec2]; point: Vec2): bool =
     let plane = plane2_cw(edge)
     if distance(plane, point) < 0:
       return false
+
+
+proc inside*(points: open_array[Vec2]; point: Vec2; info: var CollisionInfo) =
+  info.hit = true
+  var closest = high float32
+  for edge in points.edges:
+    let plane = plane2_cw(edge)
+    var dist = distance(plane, point)
+    if dist < 0:
+      info.hit = false
+      return
+
+    if abs(dist) < closest:
+      info.depth = dist
+      info.normal = plane.normal
+      closest = abs(dist)
+
+
+proc inside*(circle: Circle; point: Vec2; info: var CollisionInfo) =
+  let dist = distance(circle.pos, point)
+  if dist < circle.radius:
+    info.hit    = true
+    info.depth  = circle.radius - dist
+    info.normal = direction(circle.pos, point)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -366,11 +390,24 @@ proc overlaps*(a_points, b_points: open_array[Vec2]; info: var CollisionInfo) =
       info.normal = plane.normal
       closest = abs(dist)
 
+
+proc overlaps*(a: Circle; b: Plane2; info: var CollisionInfo) =
+  let dist = abs distance(b, a.pos)
+  if dist < a.radius:
+    info.hit = true
+    info.depth = a.radius - dist
+    info.normal = b.normal
+
 # --------------------------------------------------------------------------------------------------
 
 proc `*`*(m: Mat3; hull: open_array[Vec2]): seq[Vec2] =
   result = new_seq[Vec2](len(hull))
   for i, point in hull: result[i] = m * point
+
+
+proc `*`*(m: Mat3; c: Circle): Circle =
+  result.pos    = m * c.pos
+  result.radius = distance(result.pos, m * (vec2(c.radius) + c.pos))
 
 
 proc transform*(m: Mat3; hull: open_array[Vec2]; dest: var open_array[Vec2]) =

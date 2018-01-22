@@ -199,6 +199,10 @@ proc reflect*(incident, normal: Vec2): Vec2 =
   result = incident - 2.0f * dot(normal, incident) * normal
 
 
+proc reflect*(incident, normal: Vec2; restitution: float32): Vec2 =
+  result = incident - (1f + restitution) * normal * dot(normal, incident)
+
+
 proc direction*(a, b: Vec2): Vec2 =
   result = normalize(b - a)
 
