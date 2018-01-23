@@ -316,7 +316,7 @@ proc aabb2*(min, max: Vec2): AABB2 =
 
 proc aabb2*(point: Vec2): AABB2 =
   result.min = point
-  result,nax = point
+  result.max = point
 
 
 proc size*(box: AABB2): Vec2 =
