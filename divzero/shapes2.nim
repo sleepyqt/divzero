@@ -349,7 +349,7 @@ proc overlaps*(a: Circle; b: Circle; info: var CollisionInfo) =
   info.hit = ds < (r2 * r2)
   if info.hit:
     info.depth  = r2 - sqrt(ds)
-    info.normal = direction(a.pos, b.pos)
+    info.normal = direction(b.pos, a.pos)
 
 
 proc overlaps*(a_points, b_points: open_array[Vec2]; info: var CollisionInfo) =
@@ -392,7 +392,7 @@ proc overlaps*(a_points, b_points: open_array[Vec2]; info: var CollisionInfo) =
 
 
 proc overlaps*(a: Circle; b: Plane2; info: var CollisionInfo) =
-  let dist = abs distance(b, a.pos)
+  let dist = distance(b, a.pos)
   if dist < a.radius:
     info.hit = true
     info.depth = a.radius - dist
