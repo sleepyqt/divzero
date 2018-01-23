@@ -235,6 +235,11 @@ proc ceil*(a: Vec2): Vec2 {.inline.} =
   result.x = ceil(a.x)
   result.y = ceil(a.y)
 
+
+proc abs*(a: Vec2): Vec2 =
+  result.x = abs(a.x)
+  result.y = abs(a.y)
+
 # --------------------------------------------------------------------------------------------------
 
 proc left*(a: Vec2): Vec2 {.inline.} =

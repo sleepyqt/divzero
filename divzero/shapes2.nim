@@ -7,6 +7,41 @@ type Rectangle* = object
   pos*: Vec2
   size*: Vec2
 
+
+type AABB2* = object
+  min*, max*: Vec2
+
+
+type Ray2* = object
+  origin*, direction*: Vec2
+
+
+type Edge* = object
+  p0*, p1*: Vec2
+
+
+type Plane2* = object
+  normal*: Vec2
+  dist*: float32
+
+
+type Circle* = object
+  pos*: Vec2
+  radius*: float32
+
+
+type ConvexHull* = object
+  count*: int32
+  points*: array[8, Vec2]
+
+
+type CollisionInfo* = object
+  hit*: bool
+  normal*: Vec2
+  depth*: float32
+
+# --------------------------------------------------------------------------------------------------
+# Rectangle
 # --------------------------------------------------------------------------------------------------
 
 proc rectangle*(x, y, w, h: float32): Rectangle {.inline.} =
@@ -19,6 +54,11 @@ proc rectangle*(x, y, w, h: float32): Rectangle {.inline.} =
 proc rectangle*(pos, size: Vec2): Rectangle {.inline.} =
   result.pos = pos
   result.size = size
+
+
+proc rectangle*(aabb: AABB2): Rectangle =
+  result.pos = aabb.min
+  result.size = aabb.max - aabb.min
 
 # --------------------------------------------------------------------------------------------------
 
@@ -193,32 +233,28 @@ proc split2_horz_pixels*(a: Rectangle; split_pos: float32): (Rectangle, Rectangl
   result[1].size.y = a.size.y
 
 # --------------------------------------------------------------------------------------------------
-
-type Circle* = object
-  pos*: Vec2
-  radius*: float32
-
+# Circle
+# --------------------------------------------------------------------------------------------------
 
 proc circle*(pos: Vec2; radius: float32): Circle =
   result.pos = pos
   result.radius = radius
 
-# --------------------------------------------------------------------------------------------------
 
-type Ray2* = object
-  origin*, direction*: Vec2
-
-# --------------------------------------------------------------------------------------------------
-
-type Edge* = object
-  p0*, p1*: Vec2
+proc `*`*(m: Mat3; c: Circle): Circle =
+  result.pos    = m * c.pos
+  result.radius = distance(result.pos, m * (vec2(c.radius) + c.pos))
 
 # --------------------------------------------------------------------------------------------------
+# Edge
+# --------------------------------------------------------------------------------------------------
 
-type Plane2* = object
-  normal*: Vec2
-  dist*: float32
+proc `*`*(m: Mat3; e: Edge): Edge =
+  result.p0 = m * e.p0
+  result.p1 = m * e.p1
 
+# --------------------------------------------------------------------------------------------------
+# Plane2
 # --------------------------------------------------------------------------------------------------
 
 proc plane2*(normal: Vec2; dist: float32): Plane2 =
@@ -270,12 +306,55 @@ iterator edges*(points: open_array[Vec2]): Edge =
     yield Edge(p0: points[i0], p1: points[i1])
 
 # --------------------------------------------------------------------------------------------------
+# AABB2
+# --------------------------------------------------------------------------------------------------
 
-type CollisionInfo* = object
-  hit*: bool
-  normal*: Vec2
-  depth*: float32
+proc aabb2*(min, max: Vec2): AABB2 =
+  result.min = min
+  result.max = max
 
+
+proc aabb2*(point: Vec2): AABB2 =
+  result.min = point
+  result,nax = point
+
+
+proc size*(box: AABB2): Vec2 =
+  result = box.max - box.min
+
+
+proc center*(box: AABB2): Vec2 =
+  result = (box.min + box.max) * 0.5f
+
+
+proc expand*(box: var AABB2; point: Vec2) =
+  box.min = min(box.min, point)
+  box.max = max(box.max, point)
+
+
+proc expand*(box: var AABB2; b: AABB2) =
+  box.min = min(box.min, b.min)
+  box.max = max(box.max, b.max)
+
+
+proc half_size*(box: AABB2): Vec2 =
+  result = box.size * 0.5f
+
+
+proc offset*(box: AABB2; dir: Vec2): AABB2 =
+  result.min += dir
+  result.max += dir
+
+# --------------------------------------------------------------------------------------------------
+# ConvexHull
+# --------------------------------------------------------------------------------------------------
+
+proc `*`*(m: Mat3; hull: ConvexHull): ConvexHull =
+  result.count = hull.count
+  for i in 0 ..< hull.count:
+    result.points[i] = m * hull.points[i]
+
+# --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 
 proc inside*(circle: Circle; point: Vec2): bool =
@@ -330,6 +409,7 @@ proc inside*(circle: Circle; point: Vec2; info: var CollisionInfo) =
     info.normal = direction(circle.pos, point)
 
 # --------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 
 proc overlaps*(a: Rectangle; b: Rectangle): bool =
   let over_x = (a.left < b.right) and (a.right > b.left)
@@ -341,6 +421,28 @@ proc overlaps*(a: Circle; b: Circle): bool =
   let r2 = a.radius + b.radius
   result = distance_sq(a.pos, b.pos) < (r2 * r2)
 
+
+proc overlaps*(a: AABB2; b: AABB2): bool =
+  let d0 = b.max.x < a.min.x
+  let d1 = a.max.x < b.min.x
+  let d2 = b.max.y < a.min.y
+  let d3 = a.max.y < b.min.y
+  result = not (d0 or d1 or d2 or d3)
+
+
+proc overlaps*(a: AABB2; b: Circle): bool =
+  let L  = clamp(b.pos, a.min, a.max)
+  let ab = b.pos - L
+  let d2 = dot(ab, ab)
+  let r2 = b.radius * b.radius
+  result = d2 < r2
+
+
+proc overlaps*(a: Circle; b: Plane2): bool =
+  let dist = distance(b, a.pos)
+  result = dist < a.radius
+
+# --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 
 proc overlaps*(a: Circle; b: Circle; info: var CollisionInfo) =
@@ -398,16 +500,45 @@ proc overlaps*(a: Circle; b: Plane2; info: var CollisionInfo) =
     info.depth = a.radius - dist
     info.normal = b.normal
 
+
+proc overlaps*(a: Rectangle; b: Rectangle; info: var CollisionInfo) =
+  let over_x = (a.left < b.right) and (a.right > b.left)
+  let over_y = (a.top < b.bottom) and (a.bottom > b.top)
+  info.hit = over_x and over_y
+
+
+proc overlaps*(a: AABB2; b: AABB2; info: var CollisionInfo) =
+  let mid_a = a.center
+  let mid_b = b.center
+  let eA    = abs a.half_size
+  let eB    = abs b.half_size
+  let d     = mid_b - mid_a
+
+  let dx = eA.x + eB.x - abs(d.x)
+  let dy = eA.y + eB.y - abs(d.y)
+
+  if (dx >= 0) and (dy >= 0):
+    info.hit = true
+
+    if dx < dy:
+      info.depth = dx
+      if d.x < 0:
+        info.normal = vec2(-1f, 0f)
+      else:
+        info.normal = vec2(1f, 0f)
+    else:
+      info.depth = dy
+      if d.y < 0:
+        info.normal = vec2(0, -1f)
+      else:
+        info.normal = vec2(0, 1f)
+
+# --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 
 proc `*`*(m: Mat3; hull: open_array[Vec2]): seq[Vec2] =
   result = new_seq[Vec2](len(hull))
   for i, point in hull: result[i] = m * point
-
-
-proc `*`*(m: Mat3; c: Circle): Circle =
-  result.pos    = m * c.pos
-  result.radius = distance(result.pos, m * (vec2(c.radius) + c.pos))
 
 
 proc transform*(m: Mat3; hull: open_array[Vec2]; dest: var open_array[Vec2]) =
