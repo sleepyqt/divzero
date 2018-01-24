@@ -206,6 +206,10 @@ proc reflect*(incident, normal: Vec2; restitution: float32): Vec2 =
 proc direction*(a, b: Vec2): Vec2 =
   result = normalize(b - a)
 
+
+proc slide*(incident, normal: Vec2): Vec2 =
+  result = incident - normal * dot(incident, normal)
+
 # --------------------------------------------------------------------------------------------------
 
 proc outside*(p, min, max: Vec2): bool =

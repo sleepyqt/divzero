@@ -342,8 +342,8 @@ proc half_size*(box: AABB2): Vec2 =
 
 
 proc offset*(box: AABB2; dir: Vec2): AABB2 =
-  result.min += dir
-  result.max += dir
+  result.min = box.min + dir
+  result.max = box.max + dir
 
 # --------------------------------------------------------------------------------------------------
 # ConvexHull
