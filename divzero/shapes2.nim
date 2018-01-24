@@ -523,15 +523,15 @@ proc overlaps*(a: AABB2; b: AABB2; info: var CollisionInfo) =
     if dx < dy:
       info.depth = dx
       if d.x < 0:
-        info.normal = vec2(-1f, 0f)
-      else:
         info.normal = vec2(1f, 0f)
+      else:
+        info.normal = vec2(-1f, 0f)
     else:
       info.depth = dy
       if d.y < 0:
-        info.normal = vec2(0, -1f)
-      else:
         info.normal = vec2(0, 1f)
+      else:
+        info.normal = vec2(0, -1f)
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
