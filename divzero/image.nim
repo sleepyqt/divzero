@@ -91,6 +91,7 @@ iterator mdwords*(image: Image): ptr uint32 =
 
 template sample2d(data: pointer; pitch, stride, x, y: int32): int =
   cast[int](data) + ((x * stride) + y * pitch)
+  #cast[int](data) + ((x * stride) + (image.height - 1 - y) * pitch)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -98,6 +99,7 @@ proc set_pixel*(image: var Image; x, y: int32; color: Color) =
   case image.format:
   of IMAGE_FORMAT.RGBA_8888:
     let i = sample2d(image.data, image.pitch, image.stride, x, y)
+    #echo "x = ", x, " y = ", y, " i = ", i
     cast[ptr uint32](i)[] = encode_abgr_8888(color)
   else:
     assert(false, "set_pixel: Unsupported image format")

@@ -210,6 +210,11 @@ proc direction*(a, b: Vec2): Vec2 =
 proc slide*(incident, normal: Vec2): Vec2 =
   result = incident - normal * dot(incident, normal)
 
+
+proc refract*(incident, normal: Vec2; eta: float32): Vec2 =
+  var k: float32 = 1.0f - eta * eta * (1.0f - dot(normal, incident) * dot(normal, incident))
+  if k < 0.0f: vec2() else: eta * incident - (eta * dot(normal, incident) + sqrt(k)) * normal
+
 # --------------------------------------------------------------------------------------------------
 
 proc outside*(p, min, max: Vec2): bool =

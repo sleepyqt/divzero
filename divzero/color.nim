@@ -1,4 +1,5 @@
 import math
+import divzero / [mathfn]
 
 # --------------------------------------------------------------------------------------------------
 
@@ -112,6 +113,14 @@ proc blend_screen*(x, y: Color): Color =
   result.g = 1f - (1f - x.g) * (1f - y.g)
   result.b = 1f - (1f - x.b) * (1f - y.b)
   result.a = 1f - (1f - x.a) * (1f - y.a)
+
+# --------------------------------------------------------------------------------------------------
+
+proc lerp*(t: float32; a, b: Color): Color =
+  result.r = lerp(t, a.r, b.r)
+  result.g = lerp(t, a.g, b.g)
+  result.b = lerp(t, a.b, b.b)
+  result.a = lerp(t, a.a, b.a)
 
 # --------------------------------------------------------------------------------------------------
 

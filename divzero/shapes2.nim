@@ -63,19 +63,19 @@ proc rectangle*(aabb: AABB2): Rectangle =
 # --------------------------------------------------------------------------------------------------
 
 proc top_left*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos + vec2(0f, rect.size.y)
-
-
-proc top_right*(rect: Rectangle): Vec2 {.inline.} =
-  result = rect.pos + rect.size
-
-
-proc bottom_left*(rect: Rectangle): Vec2 {.inline.} =
   result = rect.pos
 
 
-proc bottom_right*(rect: Rectangle): Vec2 {.inline.} =
+proc top_right*(rect: Rectangle): Vec2 {.inline.} =
   result = rect.pos + vec2(rect.size.x, 0f)
+
+
+proc bottom_left*(rect: Rectangle): Vec2 {.inline.} =
+  result = rect.pos + vec2(0f, rect.size.y)
+
+
+proc bottom_right*(rect: Rectangle): Vec2 {.inline.} =
+  result = rect.pos + rect.size
 
 
 proc left*(rect: Rectangle): float32 {.inline.} =
@@ -100,6 +100,10 @@ proc width*(rect: Rectangle): float32 {.inline.} =
 
 proc height*(rect: Rectangle): float32 {.inline.} =
   result = rect.size.y
+
+
+proc center*(rect: Rectangle): Vec2 =
+  result = rect.pos + rect.size * 0.5f
 
 # --------------------------------------------------------------------------------------------------
 

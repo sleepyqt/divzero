@@ -31,8 +31,8 @@ proc mat3_s*(scale: Vec2): Mat3 =
 proc mat3_r*(phi: float32): Mat3 =
   let c = cos(phi)
   let s = sin(phi)
-  result.x = vec2(c,  -s)
-  result.y = vec2(s,  c,)
+  result.x = vec2( c,  s)
+  result.y = vec2(-s,  c)
   result.t = vec2(0f, 0f)
 
 
