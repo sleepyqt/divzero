@@ -91,7 +91,6 @@ iterator mdwords*(image: Image): ptr uint32 =
 
 template sample2d(data: pointer; pitch, stride, x, y: int32): int =
   cast[int](data) + ((x * stride) + y * pitch)
-  #cast[int](data) + ((x * stride) + (image.height - 1 - y) * pitch)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -99,7 +98,6 @@ proc set_pixel*(image: var Image; x, y: int32; color: Color) =
   case image.format:
   of IMAGE_FORMAT.RGBA_8888:
     let i = sample2d(image.data, image.pitch, image.stride, x, y)
-    #echo "x = ", x, " y = ", y, " i = ", i
     cast[ptr uint32](i)[] = encode_abgr_8888(color)
   else:
     assert(false, "set_pixel: Unsupported image format")
@@ -111,7 +109,7 @@ proc get_pixel*(image: Image; x, y: int32): Color =
     let i = sample2d(image.data, image.pitch, image.stride, x, y)
     result = decode_abgr_8888(cast[ptr uint32](i)[])
   else:
-    assert(false, "set_pixel: Unsupported image format")
+    assert(false, "get_pixel: Unsupported image format")
 
 # --------------------------------------------------------------------------------------------------
 
@@ -122,3 +120,13 @@ proc clear*(image: var Image; color: Color) =
     for pixel in mdwords(image): pixel[] = d
   else:
     assert(false, "clear: Unsupported image format")
+
+
+proc print_ascii*(image: Image; x1, y1, x2, y2: int32) =
+  for py in x1 ..< x2:
+    for px in y1 ..< y2:
+      let p = image.get_pixel(int32 px, int32 py)
+      let u = p.encode_abgr_8888()
+      let g = gray(p)
+      stdout.write(if g.r < 0.5f: "X" else: ".")
+    stdout.write("\n")

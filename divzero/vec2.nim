@@ -252,13 +252,13 @@ proc abs*(a: Vec2): Vec2 =
 # --------------------------------------------------------------------------------------------------
 
 proc left*(a: Vec2): Vec2 {.inline.} =
-  ## return vector rotated by -90 degrees
-  result = vec2(-a.y, a.x)
+  ## return vector rotated by 90 degrees counter clockwise
+  result = vec2(a.y, -a.x)
 
 
 proc right*(a: Vec2): Vec2 {.inline.} =
-  ## return vector rotated by 90 degrees
-  result = vec2(a.y, -a.x)
+  ## return vector rotated by 90 degrees clockwise
+  result = vec2(-a.y, a.x)
 
 # --------------------------------------------------------------------------------------------------
 

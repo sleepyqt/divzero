@@ -273,23 +273,23 @@ proc plane2*(normal, origin: Vec2): Plane2 =
 
 proc plane2_cw*(a, b: Vec2): Plane2 =
   ## build plane from two points
-  result.normal = direction(a, b).left()
+  result.normal = direction(a, b).right()
   result.dist = dot(result.normal, a)
 
 
 proc plane2_ccw*(a, b: Vec2): Plane2 =
   ## build plane from two points
-  result.normal = direction(a, b).right()
+  result.normal = direction(a, b).left()
   result.dist = dot(result.normal, a)
 
 
 proc plane2_cw*(edge: Edge): Plane2 =
-  result.normal = direction(edge.p0, edge.p1).left()
+  result.normal = direction(edge.p0, edge.p1).right()
   result.dist   = dot(result.normal, edge.p0)
 
 
 proc plane2_ccw*(edge: Edge): Plane2 =
-  result.normal = direction(edge.p0, edge.p1).right()
+  result.normal = direction(edge.p0, edge.p1).left()
   result.dist   = dot(result.normal, edge.p0)
 
 
