@@ -30,6 +30,10 @@ type Circle* = object
   radius*: float32
 
 
+type Triangle* = object
+  a*, b*, c*: Vec2
+
+
 type ConvexHull* = object
   count*: int32
   points*: array[8, Vec2]
@@ -244,6 +248,11 @@ proc circle*(pos: Vec2; radius: float32): Circle =
   result.pos = pos
   result.radius = radius
 
+proc circle*(x, y, radius: float32): Circle =
+  result.pos.x = x
+  result.pos.y = y
+  result.radius = radius
+
 
 proc `*`*(m: Mat3; c: Circle): Circle =
   result.pos    = m * c.pos
@@ -314,17 +323,29 @@ iterator edges*(points: open_array[Vec2]): Edge =
 # --------------------------------------------------------------------------------------------------
 
 proc aabb2*(min, max: Vec2): AABB2 =
+  ## builds AABB from a two points
   result.min = min
   result.max = max
 
 
 proc aabb2*(point: Vec2): AABB2 =
+  ## builds AABB from a point
   result.min = point
   result.max = point
 
 
+proc aabb2*(circle: Circle): AABB2 =
+  ## builds AABB from a circle
+  result.min = circle.pos - vec2(circle.radius, circle.radius)
+  result.max = circle.pos + vec2(circle.radius, circle.radius)
+
+
 proc size*(box: AABB2): Vec2 =
   result = box.max - box.min
+
+
+proc half_size*(box: AABB2): Vec2 =
+  result = box.size * 0.5f
 
 
 proc center*(box: AABB2): Vec2 =
@@ -341,13 +362,14 @@ proc expand*(box: var AABB2; b: AABB2) =
   box.max = max(box.max, b.max)
 
 
-proc half_size*(box: AABB2): Vec2 =
-  result = box.size * 0.5f
-
-
 proc offset*(box: AABB2; dir: Vec2): AABB2 =
   result.min = box.min + dir
   result.max = box.max + dir
+
+
+proc `*`*(m: Mat3; box: AABB2): AABB2 =
+  result.min = m * box.min
+  result.max = m * box.max
 
 # --------------------------------------------------------------------------------------------------
 # ConvexHull
@@ -357,6 +379,15 @@ proc `*`*(m: Mat3; hull: ConvexHull): ConvexHull =
   result.count = hull.count
   for i in 0 ..< hull.count:
     result.points[i] = m * hull.points[i]
+
+# --------------------------------------------------------------------------------------------------
+# Triangle
+# --------------------------------------------------------------------------------------------------
+
+proc triangle*(a, b, c: Vec2): Triangle =
+  result.a = a
+  result.b = b
+  result.c = c
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
@@ -411,6 +442,14 @@ proc inside*(circle: Circle; point: Vec2; info: var CollisionInfo) =
     info.hit    = true
     info.depth  = circle.radius - dist
     info.normal = direction(circle.pos, point)
+
+
+proc inside*(aabb: AABB2; point: Vec2): bool =
+  if point.x < aabb.min.x: return
+  if point.y < aabb.min.y: return
+  if point.x > aabb.max.x: return
+  if point.y > aabb.max.y: return
+  result = true
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
