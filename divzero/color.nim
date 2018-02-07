@@ -133,15 +133,36 @@ proc to_linear*(color: SrgbColor): Color =
 # --------------------------------------------------------------------------------------------------
 
 const
-  COLOR_WHITE*  = to_linear(color(1.0f, 1.0f, 1.0f, 1.0f))
-  COLOR_BLACK*  = to_linear(color(0.0f, 0.0f, 0.0f, 1.0f))
-  COLOR_GRAY*   = to_linear(color(0.5f, 0.5f, 0.5f, 1.0f))
-  COLOR_RED*    = to_linear(color(1.0f, 0.0f, 0.0f, 1.0f))
-  COLOR_GREEN*  = to_linear(color(0.0f, 1.0f, 0.0f, 1.0f))
-  COLOR_BLUE*   = to_linear(color(0.0f, 0.0f, 1.0f, 1.0f))
-  COLOR_PINK*   = to_linear(color(1.0f, 0.0f, 1.0f, 1.0f))
-  COLOR_CYAN*   = to_linear(color(0.0f, 1.0f, 1.0f, 1.0f))
-  COLOR_YELLOW* = to_linear(color(1.0f, 1.0f, 0.0f, 1.0f))
+  # VGA 16 colors
+  COLOR_BLACK*                  = color(0.00f, 0.00f, 0.00f, 1.00f).to_linear
+  COLOR_BLUE*                   = color(0.00f, 0.00f, 0.66f, 1.00f).to_linear
+  COLOR_GREEN*                  = color(0.00f, 0.66f, 0.00f, 1.00f).to_linear
+  COLOR_CYAN*                   = color(0.00f, 0.66f, 0.66f, 1.00f).to_linear
+  COLOR_RED*                    = color(0.66f, 0.00f, 0.00f, 1.00f).to_linear
+  COLOR_MAGENTA*                = color(0.66f, 0.00f, 0.66f, 1.00f).to_linear
+  COLOR_BROWN*                  = color(0.66f, 0.33f, 0.00f, 1.00f).to_linear
+  COLOR_LIGHT_GRAY*             = color(0.66f, 0.66f, 0.66f, 1.00f).to_linear
+  COLOR_GRAY*                   = color(0.33f, 0.33f, 0.33f, 1.00f).to_linear
+  COLOR_LIGHT_BLUE*             = color(0.33f, 0.33f, 1.00f, 1.00f).to_linear
+  COLOR_LIGHT_GREEN*            = color(0.33f, 1.00f, 0.33f, 1.00f).to_linear
+  COLOR_LIGHT_CYAN*             = color(0.33f, 1.00f, 1.00f, 1.00f).to_linear
+  COLOR_LIGHT_RED*              = color(1.00f, 0.33f, 0.33f, 1.00f).to_linear
+  COLOR_LIGHT_MAGENTA*          = color(1.00f, 0.33f, 1.00f, 1.00f).to_linear
+  COLOR_YELLOW*                 = color(1.00f, 1.00f, 0.33f, 1.00f).to_linear
+  COLOR_WHITE*                  = color(1.00f, 1.00f, 1.00f, 1.00f).to_linear
+
+const
+  COLOR_PINK*                   = color(1.00f, 0.00f, 1.00f, 1.00f).to_linear
+
+const
+  COLOR_MONOKAI_BLACK*          = color(0x272822ffu32).to_linear
+  COLOR_MONOKAI_RED*            = color(0xf92672ffu32).to_linear
+  COLOR_MONOKAI_GREEN*          = color(0xa6e22effu32).to_linear
+  COLOR_MONOKAI_YELLOW*         = color(0xf4bf75ffu32).to_linear
+  COLOR_MONOKAI_BLUE*           = color(0x66d9efffu32).to_linear
+  COLOR_MONOKAI_MAGENTA*        = color(0xae81ffffu32).to_linear
+  COLOR_MONOKAI_CYAN*           = color(0xa1efe4ffu32).to_linear
+  COLOR_MONOKAI_WHITE*          = color(0xf8f8f2ffu32).to_linear
 
 # --------------------------------------------------------------------------------------------------
 
