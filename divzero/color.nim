@@ -10,43 +10,6 @@ type SrgbColor* = Color
 
 # --------------------------------------------------------------------------------------------------
 
-proc encode_abgr_8888*(color: Color): uint32 =
-  let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_00_FFu32
-  let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_00_FF_00u32
-  let b: uint32 = (uint32(color.b * 255f) shl 16) and 0x00_FF_00_00u32
-  let a: uint32 = (uint32(color.a * 255f) shl 24) and 0xFF_00_00_00u32
-  result = r or g or b or a
-
-
-proc decode_abgr_8888*(color: uint32): Color =
-  let r: uint32 = (color shr 24) and 0x00_00_00_FFu32
-  let g: uint32 = (color shr 16) and 0x00_00_00_FFu32
-  let b: uint32 = (color shr 08) and 0x00_00_00_FFu32
-  let a: uint32 = (color shr 00) and 0x00_00_00_FFu32
-  result.r = float32(r) / 255f
-  result.g = float32(g) / 255f
-  result.b = float32(b) / 255f
-  result.a = float32(a) / 255f
-
-
-proc encode_bgr_888*(color: Color): uint32 =
-  let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_00_FFu32
-  let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_00_FF_00u32
-  let b: uint32 = (uint32(color.b * 255f) shl 16) and 0x00_FF_00_00u32
-  result = r or g or b
-
-
-proc decode_bgr_888*(color: uint32): Color =
-  let r: uint32 = (color shr 24) and 0x00_00_00_FFu32
-  let g: uint32 = (color shr 16) and 0x00_00_00_FFu32
-  let b: uint32 = (color shr 08) and 0x00_00_00_FFu32
-  result.r = float32(r) / 255f
-  result.g = float32(g) / 255f
-  result.b = float32(b) / 255f
-  result.a = 1f
-
-# --------------------------------------------------------------------------------------------------
-
 proc color*(r, g, b, a: float32): Color =
   result = Color(r: r, g: g, b: b, a: a)
 
@@ -129,6 +92,56 @@ proc to_linear*(color: SrgbColor): Color =
   result.g = if color.g < 0.04045f: color.g * (1f / 12.92f) else: pow((color.g + 0.055f) * (1f / 1.055f), 2.4f)
   result.b = if color.b < 0.04045f: color.b * (1f / 12.92f) else: pow((color.b + 0.055f) * (1f / 1.055f), 2.4f)
   result.a = color.a
+
+# --------------------------------------------------------------------------------------------------
+
+proc encode_abgr_8888*(color: Color): uint32 =
+  let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_00_FFu32
+  let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_00_FF_00u32
+  let b: uint32 = (uint32(color.b * 255f) shl 16) and 0x00_FF_00_00u32
+  let a: uint32 = (uint32(color.a * 255f) shl 24) and 0xFF_00_00_00u32
+  result = r or g or b or a
+
+
+proc decode_abgr_8888*(color: uint32): Color =
+  let r: uint32 = (color shr 24) and 0x00_00_00_FFu32
+  let g: uint32 = (color shr 16) and 0x00_00_00_FFu32
+  let b: uint32 = (color shr 08) and 0x00_00_00_FFu32
+  let a: uint32 = (color shr 00) and 0x00_00_00_FFu32
+  result.r = float32(r) / 255f
+  result.g = float32(g) / 255f
+  result.b = float32(b) / 255f
+  result.a = float32(a) / 255f
+
+
+proc encode_bgr_888*(color: Color): uint32 =
+  let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_00_FFu32
+  let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_00_FF_00u32
+  let b: uint32 = (uint32(color.b * 255f) shl 16) and 0x00_FF_00_00u32
+  result = r or g or b
+
+
+proc decode_bgr_888*(color: uint32): Color =
+  let r: uint32 = (color shr 24) and 0x00_00_00_FFu32
+  let g: uint32 = (color shr 16) and 0x00_00_00_FFu32
+  let b: uint32 = (color shr 08) and 0x00_00_00_FFu32
+  result.r = float32(r) / 255f
+  result.g = float32(g) / 255f
+  result.b = float32(b) / 255f
+  result.a = 1f
+
+
+proc encode_gray_8*(color: Color): uint8 =
+  let g: uint8 = uint8(color.gray.r * 255f)
+  result = g
+
+
+proc decode_gray_8*(color: uint8): Color =
+  let g: float32 = float32(color) / 255f
+  result.r = g
+  result.g = g
+  result.b = g
+  result.a = 1f
 
 # --------------------------------------------------------------------------------------------------
 

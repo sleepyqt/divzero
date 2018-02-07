@@ -2,15 +2,16 @@ import divzero / [color]
 
 # --------------------------------------------------------------------------------------------------
 
-type ImageFormat* {.pure.} = enum
-  None
-  RGBA_8888
-  RGB_888
-  BGRA_8888
-  BGR_888
-  SRGBA_8888
-  SRGB_888
-  DXT3
+type ImageFormat* = enum
+  IF_NONE = 0
+  IF_RGBA_8888 = 1
+  IF_RGB_888 = 2
+  IF_BGRA_8888 = 3
+  IF_BGR_888 = 4
+  IF_SRGBA_8888 = 5
+  IF_SRGB_888 = 6
+  IF_DXT3 = 7
+  IF_GRAY_8 = 8
 
 
 type ImageFlags* {.pure.} = enum
@@ -31,7 +32,7 @@ type Image* = object
 
 # --------------------------------------------------------------------------------------------------
 
-proc stride*(format: ImageFormat): int32 = int32([0, 4, 3, 4, 3, 4, 3, 0][int32(format)])
+proc stride*(format: ImageFormat): int32 = int32([0, 4, 3, 4, 3, 4, 3, 0, 1][ord format])
 
 proc roundup(x, v: int32): int32 {.inline.} = (x + (v - 1)) and not (v - 1)
 
@@ -95,19 +96,23 @@ template sample2d(data: pointer; pitch, stride, x, y: int32): int =
 # --------------------------------------------------------------------------------------------------
 
 proc set_pixel*(image: var Image; x, y: int32; color: Color) =
+  let i = sample2d(image.data, image.pitch, image.stride, x, y)
   case image.format:
-  of IMAGE_FORMAT.RGBA_8888:
-    let i = sample2d(image.data, image.pitch, image.stride, x, y)
+  of IF_RGBA_8888:
     cast[ptr uint32](i)[] = encode_abgr_8888(color)
+  of IF_GRAY_8:
+    cast[ptr uint8](i)[] = encode_gray_8(color)
   else:
     assert(false, "set_pixel: Unsupported image format")
 
 
 proc get_pixel*(image: Image; x, y: int32): Color =
+  let i = sample2d(image.data, image.pitch, image.stride, x, y)
   case image.format:
-  of IMAGE_FORMAT.RGBA_8888:
-    let i = sample2d(image.data, image.pitch, image.stride, x, y)
+  of IF_RGBA_8888:
     result = decode_abgr_8888(cast[ptr uint32](i)[])
+  of IF_GRAY_8:
+    result = decode_gray_8(cast[ptr uint8](i)[])
   else:
     assert(false, "get_pixel: Unsupported image format")
 
@@ -115,7 +120,7 @@ proc get_pixel*(image: Image; x, y: int32): Color =
 
 proc clear*(image: var Image; color: Color) =
   case image.format:
-  of IMAGE_FORMAT.RGBA_8888:
+  of IF_RGBA_8888:
     var d: uint32 = encode_abgr_8888(color)
     for pixel in mdwords(image): pixel[] = d
   else:
