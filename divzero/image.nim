@@ -102,6 +102,13 @@ proc in_bounds*(image: Image; x, y: int32): bool =
   result = true
 
 
+proc set_pixel_rgba_8888*(image: var Image; x, y: int32; color: Color) =
+  assert(image.data != nil)
+  assert(in_bounds(image, x, y))
+  let i = sample2d(image.data, image.pitch, 4, x, y)
+  cast[ptr uint32](i)[] = encode_abgr_8888(color)
+
+
 proc set_pixel*(image: var Image; x, y: int32; color: Color) =
   assert(image.data != nil)
   assert(in_bounds(image, x, y))
@@ -109,6 +116,8 @@ proc set_pixel*(image: var Image; x, y: int32; color: Color) =
   case image.format:
   of IF_RGBA_8888:
     cast[ptr uint32](i)[] = encode_abgr_8888(color)
+  of IF_SRGBA_8888:
+    cast[ptr uint32](i)[] = encode_abgr_8888(color.to_srgb)
   of IF_GRAY_8:
     cast[ptr uint8](i)[] = encode_gray_8(color)
   else:
@@ -117,11 +126,13 @@ proc set_pixel*(image: var Image; x, y: int32; color: Color) =
 
 proc get_pixel*(image: Image; x, y: int32): Color =
   assert(image.data != nil)
-  assert(in_bounds(image, x, y))
+  assert(in_bounds(image, x, y), $x & "x" & $y)
   let i = sample2d(image.data, image.pitch, image.stride, x, y)
   case image.format:
   of IF_RGBA_8888:
     result = decode_abgr_8888(cast[ptr uint32](i)[])
+  of IF_SRGBA_8888:
+    result = decode_abgr_8888(cast[ptr uint32](i)[]).to_linear
   of IF_GRAY_8:
     result = decode_gray_8(cast[ptr uint8](i)[])
   else:
@@ -154,8 +165,8 @@ proc clear*(image: var Image; color: Color) =
 
 
 proc print_ascii*(image: Image; x1, y1, x2, y2: int32) =
-  for py in x1 ..< x2:
-    for px in y1 ..< y2:
+  for py in y1 ..< y2:
+    for px in x1 ..< x2:
       let p = image.get_pixel(int32 px, int32 py)
       let u = p.encode_abgr_8888()
       let g = gray(p)
