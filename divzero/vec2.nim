@@ -1,4 +1,5 @@
 import math
+import divzero / [mathfn]
 
 # --------------------------------------------------------------------------------------------------
 
@@ -26,15 +27,6 @@ proc xx*(v: Vec2): Vec2 {.inline.} =
 
 proc yy*(v: Vec2): Vec2 {.inline.} =
   result = Vec2(x: v.y, y: v.y)
-
-# --------------------------------------------------------------------------------------------------
-
-proc `==`*(a, b: Vec2): bool =
-  result = (a.x == b.x) and (a.y == b.y)
-
-
-proc `!=`*(a, b: Vec2): bool =
-  result = (a.x != b.x) or (a.y != b.y)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -118,12 +110,24 @@ proc `-=`*(a: var Vec2; b: Vec2) {.inline.} =
 
 # --------------------------------------------------------------------------------------------------
 
+proc `==`*(a, b: Vec2): bool =
+  result = (a.x == b.x) and (a.y == b.y)
+
+
+proc `!=`*(a, b: Vec2): bool =
+  result = (a.x != b.x) or (a.y != b.y)
+
+
 proc `<`*(a, b: Vec2): bool {.inline.} =
   result = (a.x < b.x) and (a.y < b.y)
 
 
 proc `<=`*(a, b: Vec2): bool {.inline.} =
   result = (a.x <= b.x) and (a.y <= b.y)
+
+
+proc `~=`*(a, b: Vec2): bool =
+  a.x ~= b.x and a.y ~= b.y
 
 # --------------------------------------------------------------------------------------------------
 
@@ -145,21 +149,15 @@ proc clamp*(v, min, max: Vec2): Vec2 {.inline.} =
 
 proc len*(a: Vec2): float32 {.inline.} =
   result = sqrt(a.x * a.x + a.y * a.y)
-  assert(result >= 0.0f)
 
 
 proc len_sq*(a: Vec2): float32 {.inline.} =
   result = a.x * a.x + a.y * a.y
-  assert(result >= 0.0f)
 
 
 proc normalize*(a: Vec2): Vec2 =
-  var l = len(a)
-  assert(classify(l) != fcNan)
-  assert(l > 0.0f)
-  result = a / l
-  assert(classify(a.x) != fcNan)
-  assert(classify(a.y) != fcNan)
+  let il = 1f / len(a)
+  result = a * il
 
 # --------------------------------------------------------------------------------------------------
 
@@ -270,3 +268,8 @@ proc low*(a: typedesc[Vec2]): Vec2 =
 proc high*(a: typedesc[Vec2]): Vec2 =
   result.x = high(float32)
   result.y = high(float32)
+
+# --------------------------------------------------------------------------------------------------
+
+proc selftest* =
+  discard
