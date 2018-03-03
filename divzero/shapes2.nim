@@ -1,5 +1,5 @@
+import std     / [math]
 import divzero / [vec2, mat3]
-import math
 
 # --------------------------------------------------------------------------------------------------
 
@@ -247,6 +247,7 @@ proc split2_horz_pixels*(a: Rectangle; split_pos: float32): (Rectangle, Rectangl
 proc circle*(pos: Vec2; radius: float32): Circle =
   result.pos = pos
   result.radius = radius
+
 
 proc circle*(x, y, radius: float32): Circle =
   result.pos.x = x

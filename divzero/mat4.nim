@@ -1,5 +1,5 @@
+import std     / [math]
 import divzero / [vec4]
-import math
 
 ## This module implements 4x4 transformation matrix.
 ##
