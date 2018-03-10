@@ -87,14 +87,23 @@ proc lerp*(t: float32; a, b: Color): Color =
 
 # --------------------------------------------------------------------------------------------------
 
-proc to_linear(cs: float32): float32 =
+proc premultiply*(c: Color): Color =
+  ## converts color with straight alpha to premultiplied alpha
+  result.r = c.r * c.a
+  result.g = c.g * c.a
+  result.b = c.b * c.a
+  result.a = c.a
+
+# --------------------------------------------------------------------------------------------------
+
+proc to_linear*(cs: float32): float32 =
   if cs < 0.04045f:
     cs * (1f / 12.92f)
   else:
     pow((cs + 0.055f) * (1f / 1.055f), 2.4f)
 
 
-proc to_srgb(cl: float32): float32 =
+proc to_srgb*(cl: float32): float32 =
   let c = clamp(cl, 0f, 1f)
   if c < 0.0031308f:
     12.92f * c
@@ -118,6 +127,9 @@ proc to_srgb*(color: Color): SrgbColor =
 # --------------------------------------------------------------------------------------------------
 
 proc encode_abgr_8888*(color: Color): uint32 =
+  # layout:
+  #  MSB       LSB
+  #  0xAA-BB-GG-RR
   let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_00_FFu32
   let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_00_FF_00u32
   let b: uint32 = (uint32(color.b * 255f) shl 16) and 0x00_FF_00_00u32
@@ -126,17 +138,20 @@ proc encode_abgr_8888*(color: Color): uint32 =
 
 
 proc decode_abgr_8888*(color: uint32): Color =
-  let r: uint32 = (color shr 24) and 0x00_00_00_FFu32
-  let g: uint32 = (color shr 16) and 0x00_00_00_FFu32
-  let b: uint32 = (color shr 08) and 0x00_00_00_FFu32
-  let a: uint32 = (color shr 00) and 0x00_00_00_FFu32
-  result.r = float32(r) / 255f
-  result.g = float32(g) / 255f
-  result.b = float32(b) / 255f
-  result.a = float32(a) / 255f
+  # 0xAA-BB-GG-RR
+  let r: uint32 = (color shr 00) and 0x00_00_00_FFu32
+  let g: uint32 = (color shr 08) and 0x00_00_00_FFu32
+  let b: uint32 = (color shr 16) and 0x00_00_00_FFu32
+  let a: uint32 = (color shr 24) and 0x00_00_00_FFu32
+  const inv = 1f / 255f
+  result.r = float32(r) * inv
+  result.g = float32(g) * inv
+  result.b = float32(b) * inv
+  result.a = float32(a) * inv
 
 
 proc encode_bgr_888*(color: Color): uint32 =
+  # layout: 0xBB-GG-RR
   let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_00_FFu32
   let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_00_FF_00u32
   let b: uint32 = (uint32(color.b * 255f) shl 16) and 0x00_FF_00_00u32
@@ -147,10 +162,34 @@ proc decode_bgr_888*(color: uint32): Color =
   let r: uint32 = (color shr 24) and 0x00_00_00_FFu32
   let g: uint32 = (color shr 16) and 0x00_00_00_FFu32
   let b: uint32 = (color shr 08) and 0x00_00_00_FFu32
-  result.r = float32(r) / 255f
-  result.g = float32(g) / 255f
-  result.b = float32(b) / 255f
+  const inv = 1f / 255f
+  result.r = float32(r) * inv
+  result.g = float32(g) * inv
+  result.b = float32(b) * inv
   result.a = 1f
+
+
+proc encode_rgba_8888*(color: Color): uint32 =
+  # layout:
+  #  MSB       LSB
+  #  0xRR-GG-BB-AA
+  let r: uint32 = (uint32(color.r * 255f) shl 24) and 0xFF_00_00_00u32
+  let g: uint32 = (uint32(color.g * 255f) shl 16) and 0x00_FF_00_00u32
+  let b: uint32 = (uint32(color.b * 255f) shl 08) and 0x00_00_FF_00u32
+  let a: uint32 = (uint32(color.a * 255f) shl 00) and 0x00_00_00_FFu32
+  result = r or g or b or a
+
+
+proc decode_rgba_8888*(color: uint32): Color =
+  let r: uint32 = (color shr 00) and 0x00_00_00_FFu32
+  let g: uint32 = (color shr 08) and 0x00_00_00_FFu32
+  let b: uint32 = (color shr 16) and 0x00_00_00_FFu32
+  let a: uint32 = (color shr 24) and 0x00_00_00_FFu32
+  const inv = 1f / 255f
+  result.r = float32(r) * inv
+  result.g = float32(g) * inv
+  result.b = float32(b) * inv
+  result.a = float32(a) * inv
 
 
 proc encode_gray_8*(color: Color): uint8 =

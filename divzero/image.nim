@@ -4,15 +4,20 @@ import divzero / [color]
 
 type ImageFormat* = enum
   IF_NONE = 0
-  IF_RGBA_8888 = 1
-  IF_RGB_888 = 2
-  IF_BGRA_8888 = 3
-  IF_BGR_888 = 4
-  IF_SRGBA_8888 = 5
-  IF_SRGB_888 = 6
-  IF_DXT3 = 7
-  IF_GRAY_8 = 8
+  IF_GRAY_8 = 1
+  IF_ABGR_8888 = 2
+  IF_BGR_888 = 3
+  IF_SABGR_8888 = 4
+  IF_SBGR_888 = 5
 
+const format_stride = [
+  0, # IF_NONE
+  1, # IF_GRAY_8
+  4, # IF_ABGR_8888
+  3, # IF_BGR_888
+  4, # IF_SABGR_8888
+  3, # IF_SBGR_888
+]
 
 type ImageFlags* {.pure.} = enum
   Filter, GenMipmaps
@@ -20,6 +25,10 @@ type ImageFlags* {.pure.} = enum
 # --------------------------------------------------------------------------------------------------
 
 const ROW_ALIGNMENT = 4
+
+type MipOffset* = int32
+
+type MipChain* = array[16, MipOffset] ## offsets into image.data
 
 type Image* = object
   width*, height*: int32      ## dimensions in pixels
@@ -32,7 +41,7 @@ type Image* = object
 
 # --------------------------------------------------------------------------------------------------
 
-proc stride*(format: ImageFormat): int32 = int32([0, 4, 3, 4, 3, 4, 3, 0, 1][ord format])
+proc stride*(format: ImageFormat): int32 = int32(format_stride[ord format])
 
 proc roundup(x, v: int32): int32 {.inline.} = (x + (v - 1)) and not (v - 1)
 
@@ -101,37 +110,41 @@ proc in_bounds*(image: Image; x, y: int32): bool =
   if y >= image.height: return
   result = true
 
+# --------------------------------------------------------------------------------------------------
 
-proc set_pixel_rgba_8888*(image: var Image; x, y: int32; color: Color) =
-  assert(image.data != nil)
-  assert(in_bounds(image, x, y))
+proc set_pixel_abgr_8888*(image: var Image; x, y: int32; color: Color) =
   let i = sample2d(image.data, image.pitch, 4, x, y)
   cast[ptr uint32](i)[] = encode_abgr_8888(color)
+
+
+proc set_pixel_sabgr_8888*(image: var Image; x, y: int32; color: Color) =
+  set_pixel_abgr_8888(image, x, y, color.to_srgb)
+
+
+proc set_pixel_gray_8*(image: var Image; x, y: int32; color: Color) =
+  let i = sample2d(image.data, image.pitch, 1, x, y)
+  cast[ptr uint8](i)[] = encode_gray_8(color)
 
 
 proc set_pixel*(image: var Image; x, y: int32; color: Color) =
   assert(image.data != nil)
   assert(in_bounds(image, x, y))
-  let i = sample2d(image.data, image.pitch, image.stride, x, y)
   case image.format:
-  of IF_RGBA_8888:
-    cast[ptr uint32](i)[] = encode_abgr_8888(color)
-  of IF_SRGBA_8888:
-    cast[ptr uint32](i)[] = encode_abgr_8888(color.to_srgb)
-  of IF_GRAY_8:
-    cast[ptr uint8](i)[] = encode_gray_8(color)
-  else:
-    assert(false, "set_pixel: Unsupported image format")
+  of IF_ABGR_8888:  set_pixel_abgr_8888(image, x, y, color)
+  of IF_SABGR_8888: set_pixel_sabgr_8888(image, x, y, color)
+  of IF_GRAY_8:     set_pixel_gray_8(image, x, y, color)
+  else:             assert(false, "set_pixel: Unsupported image format")
 
+# --------------------------------------------------------------------------------------------------
 
 proc get_pixel*(image: Image; x, y: int32): Color =
   assert(image.data != nil)
   assert(in_bounds(image, x, y), $x & "x" & $y)
   let i = sample2d(image.data, image.pitch, image.stride, x, y)
   case image.format:
-  of IF_RGBA_8888:
+  of IF_ABGR_8888:
     result = decode_abgr_8888(cast[ptr uint32](i)[])
-  of IF_SRGBA_8888:
+  of IF_SABGR_8888:
     result = decode_abgr_8888(cast[ptr uint32](i)[]).to_linear
   of IF_GRAY_8:
     result = decode_gray_8(cast[ptr uint8](i)[])
@@ -151,15 +164,34 @@ proc resize*(image: var Image; w, h: int32) =
 
 # --------------------------------------------------------------------------------------------------
 
+iterator pixels*(image: Image): (int32, int32, Color) =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield (x, y, get_pixel(image, x, y))
+
+# --------------------------------------------------------------------------------------------------
+
+proc premultiply*(image: var Image) =
+  #echo "premultiply"
+  for x, y, color in image.pixels:
+    let pa = color.premultiply
+    #echo "s ", color, " => ", pa
+    image.set_pixel(x, y, pa)
+
+# --------------------------------------------------------------------------------------------------
+
 proc clear*(image: var Image; color: Color) =
   assert(image.data != nil)
   case image.format:
-  of IF_RGBA_8888:
+  of IF_ABGR_8888:
     var d: uint32 = encode_abgr_8888(color)
     for pixel in mdwords(image): pixel[] = d
   of IF_GRAY_8:
     var d: uint8 = encode_gray_8(color)
     for pixel in mbytes(image): pixel[] = d
+  of IF_SABGR_8888:
+    var d: uint32 = encode_abgr_8888(color.to_srgb)
+    for pixel in mdwords(image): pixel[] = d
   else:
     assert(false, "clear: Unsupported image format")
 
