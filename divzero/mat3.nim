@@ -85,7 +85,7 @@ proc linear_transform*(m: Mat3; b: Vec2): Vec2 =
 
 
 proc affine_transform*(m: Mat3; b: Vec2): Vec2 =
-    result = linear_transform(m, b) + m.t
+  result = linear_transform(m, b) + m.t
 
 
 proc `*`*(m: Mat3; b: Vec2): Vec2 =

@@ -145,18 +145,30 @@ proc clamp*(v, min, max: Vec2): Vec2 {.inline.} =
   result.x = clamp(v.x, min.x, max.x)
   result.y = clamp(v.y, min.y, max.y)
 
+
+proc min*(a, b, c: Vec2): Vec2 {.inline.} =
+  result.x = min(min(a.x, b.x), c.x)
+  result.y = min(min(a.y, b.y), c.y)
+
+
+proc max*(a, b, c: Vec2): Vec2 {.inline.} =
+  result.x = max(max(a.x, b.x), c.x)
+  result.y = max(max(a.y, b.y), c.y)
+
 # --------------------------------------------------------------------------------------------------
-
-proc len*(a: Vec2): float32 {.inline.} =
-  result = sqrt(a.x * a.x + a.y * a.y)
-
 
 proc len_sq*(a: Vec2): float32 {.inline.} =
   result = a.x * a.x + a.y * a.y
 
 
+proc len*(a: Vec2): float32 {.inline.} =
+  result = sqrt(len_sq(a))
+
+
 proc normalize*(a: Vec2): Vec2 =
-  let il = 1f / len(a)
+  let  l = len(a)
+  do_assert(l != 0f)
+  let il = 1f / l
   result = a * il
 
 # --------------------------------------------------------------------------------------------------

@@ -9,6 +9,7 @@ type Rectangle* = object
 
 
 type AABB2* = object
+  ## Axis aligned bounding box
   min*, max*: Vec2
 
 
@@ -21,12 +22,13 @@ type Edge* = object
 
 
 type Plane2* = object
+  ## 2D plane
   normal*: Vec2
-  dist*: float32
+  dist*: float32 ## distance from origin
 
 
 type Circle* = object
-  pos*: Vec2
+  pos*: Vec2 ## center of circle
   radius*: float32
 
 
@@ -241,6 +243,14 @@ proc split2_horz_pixels*(a: Rectangle; split_pos: float32): (Rectangle, Rectangl
   result[1].size.y = a.size.y
 
 # --------------------------------------------------------------------------------------------------
+# Ray2
+# --------------------------------------------------------------------------------------------------
+
+proc ray2*(origin, direction: Vec2): Ray2 =
+  result.origin = origin
+  result.direction = direction
+
+# --------------------------------------------------------------------------------------------------
 # Circle
 # --------------------------------------------------------------------------------------------------
 
@@ -256,14 +266,24 @@ proc circle*(x, y, radius: float32): Circle =
 
 
 proc `*`*(m: Mat3; c: Circle): Circle =
-  result.pos    = m * c.pos
-  result.radius = distance(result.pos, m * (vec2(c.radius) + c.pos))
+  ## returns circle transformed by matrix
+  let a = m * (c.pos)
+  let b = m * (c.pos + vec2(0f, c.radius))
+  let d = distance(a, b)
+  result.pos    = a
+  result.radius = d
+
+
+proc offset*(circle: Circle; pos: Vec2): Circle =
+  result.pos = circle.pos + pos
+  result.radius = circle.radius
 
 # --------------------------------------------------------------------------------------------------
 # Edge
 # --------------------------------------------------------------------------------------------------
 
 proc `*`*(m: Mat3; e: Edge): Edge =
+  ## returns edge transformed by matrix
   result.p0 = m * e.p0
   result.p1 = m * e.p1
 
@@ -272,11 +292,13 @@ proc `*`*(m: Mat3; e: Edge): Edge =
 # --------------------------------------------------------------------------------------------------
 
 proc plane2*(normal: Vec2; dist: float32): Plane2 =
+  ## builds plane from normal and distance to origin
   result.normal = normal
   result.dist = dist
 
 
 proc plane2*(normal, origin: Vec2): Plane2 =
+  ## builds plane from normal and origin
   result.normal = normal
   result.dist = dot(normal, origin)
 
@@ -294,11 +316,13 @@ proc plane2_ccw*(a, b: Vec2): Plane2 =
 
 
 proc plane2_cw*(edge: Edge): Plane2 =
+  ## builds plane from edge
   result.normal = direction(edge.p0, edge.p1).right()
   result.dist   = dot(result.normal, edge.p0)
 
 
 proc plane2_ccw*(edge: Edge): Plane2 =
+  ## builds plane from edge
   result.normal = direction(edge.p0, edge.p1).left()
   result.dist   = dot(result.normal, edge.p0)
 
@@ -309,6 +333,7 @@ proc distance*(plane: Plane2; point: Vec2): float32 =
 
 
 proc center*(plane: Plane2): Vec2 =
+  ## returns point on plane
   result = plane.normal * plane.dist
 
 
@@ -318,6 +343,14 @@ iterator edges*(points: open_array[Vec2]): Edge =
     let i0 = i
     let i1 = (i + 1) mod L
     yield Edge(p0: points[i0], p1: points[i1])
+
+
+proc `*`*(m: Mat3; plane: Plane2): Plane2 =
+  ## returns plane transformed by matrix
+  let c = plane.center
+  let l = m * (c + plane.normal.left)
+  let r = m * (c + plane.normal.right)
+  result = plane2_ccw(l, r)
 
 # --------------------------------------------------------------------------------------------------
 # AABB2
@@ -339,6 +372,12 @@ proc aabb2*(circle: Circle): AABB2 =
   ## builds AABB from a circle
   result.min = circle.pos - vec2(circle.radius, circle.radius)
   result.max = circle.pos + vec2(circle.radius, circle.radius)
+
+
+proc aabb2*(triangle: Triangle): AABB2 =
+  ## build AABB from triangle
+  result.min = min(triangle.a, triangle.b, triangle.c)
+  result.max = max(triangle.a, triangle.b, triangle.c)
 
 
 proc size*(box: AABB2): Vec2 =
@@ -386,9 +425,24 @@ proc `*`*(m: Mat3; hull: ConvexHull): ConvexHull =
 # --------------------------------------------------------------------------------------------------
 
 proc triangle*(a, b, c: Vec2): Triangle =
+  ## builds triangle from tree vertices
   result.a = a
   result.b = b
   result.c = c
+
+
+proc signed_area*(a, b, c: Vec2): float32 =
+  ## returns signed area of triangle formed by points `a` `b` `c`
+  let side1 = b - a
+  let side2 = c - a
+  result = cross(side1, side2)
+
+
+proc signed_area*(triangle: Triangle): float32 =
+  ## returns signed area of triangle
+  let side1 = triangle.b - triangle.a
+  let side2 = triangle.c - triangle.a
+  result = cross(side1, side2)
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
@@ -407,6 +461,7 @@ proc inside*(rect: Rectangle; point: Vec2): bool =
 
 
 proc inside*(planes: open_array[Plane2]; point: Vec2): bool =
+  ## checks if `point` inside convex hull formed by `planes`
   result = true
   for plane in planes:
     if distance(plane, point) < 0:
@@ -414,6 +469,7 @@ proc inside*(planes: open_array[Plane2]; point: Vec2): bool =
 
 
 proc inside*(points: open_array[Vec2]; point: Vec2): bool =
+  ## checks if `point` inside convex hull formed by `points` in clockwise direction
   result = true
   for edge in points.edges:
     let plane = plane2_cw(edge)
@@ -451,6 +507,14 @@ proc inside*(aabb: AABB2; point: Vec2): bool =
   if point.x > aabb.max.x: return
   if point.y > aabb.max.y: return
   result = true
+
+
+proc inside*(triangle: Triangle; point: Vec2): bool =
+  ## checks if `point` inside `triangle`
+  let c0 = signed_area(point, triangle.a, triangle.b) < 0f
+  let c1 = signed_area(point, triangle.b, triangle.c) < 0f
+  let c2 = signed_area(point, triangle.c, triangle.a) < 0f
+  result = (c0 == c1) and (c1 == c2)
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
@@ -495,10 +559,15 @@ proc overlaps*(a: Circle; b: Circle; info: var CollisionInfo) =
   info.hit = ds < (r2 * r2)
   if info.hit:
     info.depth  = r2 - sqrt(ds)
-    info.normal = direction(b.pos, a.pos)
+    if a.pos != b.pos:
+      info.normal = direction(b.pos, a.pos)
+    else:
+      info.normal = vec2(1f, 0f)
 
 
 proc overlaps*(a_points, b_points: open_array[Vec2]; info: var CollisionInfo) =
+  ## checks if two convex hulls formed by points overlaps
+  ## points must be in clockwise order
   info.hit = true
 
   var closest = high float32
@@ -561,9 +630,9 @@ proc overlaps*(a: AABB2; b: AABB2; info: var CollisionInfo) =
   let dx = eA.x + eB.x - abs(d.x)
   let dy = eA.y + eB.y - abs(d.y)
 
-  if (dx >= 0) and (dy >= 0):
-    info.hit = true
+  info.hit = (dx >= 0) and (dy >= 0)
 
+  if info.hit:
     if dx < dy:
       info.depth = dx
       if d.x < 0:
@@ -576,6 +645,40 @@ proc overlaps*(a: AABB2; b: AABB2; info: var CollisionInfo) =
         info.normal = vec2(0, 1f)
       else:
         info.normal = vec2(0, -1f)
+
+# --------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+
+proc ray_test*(ray: Ray2; circle: Circle): bool =
+  ## checks if `ray` overlaps `circle`
+  let d = circle.pos - ray.origin
+  let r = ray.direction
+  let l = ray.direction.left
+  let X = abs(dot(d, l)) <= circle.radius
+  let Y = dot(d, r) >= 0
+  let Z = len_sq(d) <= circle.radius * circle.radius
+  result = (X and Y) or Z
+
+
+proc ray_cast*(ray: Ray2; circle: Circle; out_ray: out Ray2): bool =
+  let d = circle.pos - ray.origin
+  let r = ray.direction
+  let l = ray.direction.left
+  let a = dot(d, l)
+  let b = dot(d, r)
+  if (abs(a) > circle.radius) or (b < 0f):
+    result = false
+  else:
+    result = true
+    let t = sqrt(circle.radius * circle.radius - a * a)
+    out_ray.origin = ray.origin + ray.direction * (b - t)
+    out_ray.direction = normalize(out_ray.origin - circle.pos)
+
+# --------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+
+func support*(circle: Circle; dir: Vec2): Vec2 =
+  result = circle.pos + (dir * circle.radius)
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
