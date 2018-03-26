@@ -55,6 +55,11 @@ proc `/`*(a, b: Vec2): Vec2 {.inline.} =
   result.x = a.x / b.x
   result.y = a.y / b.y
 
+
+proc `div`*(a, b: Vec2): Vec2 =
+  result.x = trunc(a.x / b.x)
+  result.y = trunc(a.y / b.y)
+
 # --------------------------------------------------------------------------------------------------
 
 proc `+`*(a: Vec2; b: float32): Vec2 {.inline.} =
@@ -75,6 +80,11 @@ proc `*`*(a: Vec2; b: float32): Vec2 {.inline.} =
 proc `/`*(a: Vec2; b: float32): Vec2 {.inline.} =
   result.x = a.x / b
   result.y = a.y / b
+
+
+proc `div`*(a: Vec2; b: float32): Vec2 =
+  result.x = trunc(a.x / b)
+  result.y = trunc(a.y / b)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -224,6 +234,12 @@ proc slide*(incident, normal: Vec2): Vec2 =
 proc refract*(incident, normal: Vec2; eta: float32): Vec2 =
   var k: float32 = 1.0f - eta * eta * (1.0f - dot(normal, incident) * dot(normal, incident))
   if k < 0.0f: vec2() else: eta * incident - (eta * dot(normal, incident) + sqrt(k)) * normal
+
+# --------------------------------------------------------------------------------------------------
+
+func lerp*(t: float32; a, b: Vec2): Vec2 =
+  result.x = lerp(t, a.x, b.x)
+  result.y = lerp(t, a.y, b.y)
 
 # --------------------------------------------------------------------------------------------------
 

@@ -24,7 +24,7 @@ type Edge* = object
 type Plane2* = object
   ## 2D plane
   normal*: Vec2
-  dist*: float32 ## distance from origin
+  dist*: float32 ## distance to plane from origin along normal
 
 
 type Circle* = object

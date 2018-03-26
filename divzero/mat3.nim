@@ -4,10 +4,10 @@ import divzero / [vec2, mathfn]
 # --------------------------------------------------------------------------------------------------
 
 type Mat3* = object
-  ## 3x2 transformation matrix
+  ## Represents a 3x2 transformation matrix
   x*: Vec2 ## basis X-axis
   y*: Vec2 ## basis Y-axis
-  t*: Vec2 ## translation
+  t*: Vec2 ## translation component
 
 # --------------------------------------------------------------------------------------------------
 
@@ -64,6 +64,7 @@ proc mat3_s*(s: float32): Mat3 =
 # --------------------------------------------------------------------------------------------------
 
 proc basis_det*(m: Mat3): float32 =
+  ## returns determinant of 2x2 basis matrix
   result = m.x.x * m.y.y - m.y.x * m.x.y
 
 # --------------------------------------------------------------------------------------------------
@@ -80,11 +81,13 @@ proc `*`*(a, b: Mat3): Mat3 =
 
 
 proc linear_transform*(m: Mat3; b: Vec2): Vec2 =
+  ## returns vector transformed by matrix
   result.x = (m.x.x * b.x) + (m.y.x * b.y)
   result.y = (m.x.y * b.x) + (m.y.y * b.y)
 
 
 proc affine_transform*(m: Mat3; b: Vec2): Vec2 =
+  ## returns vector transformed by matrix
   result = linear_transform(m, b) + m.t
 
 
@@ -95,6 +98,7 @@ proc `*`*(m: Mat3; b: Vec2): Vec2 =
 # --------------------------------------------------------------------------------------------------
 
 proc linear_inverse*(m: Mat3): Mat3 =
+  ## returns inverse of matrix
   result.x = vec2(m.y.y, -m.x.y)
   result.y = vec2(-m.y.x, m.x.x)
   let inv_det = 1f / basis_det(m)
@@ -104,8 +108,16 @@ proc linear_inverse*(m: Mat3): Mat3 =
 
 
 proc affine_inverse*(m: Mat3): Mat3 =
+  ## returns inverse of matrix
   result = linear_inverse(m)
   result.t = linear_transform(result, -m.t)
+
+# --------------------------------------------------------------------------------------------------
+
+func lerp*(t: float32; a, b: Mat3): Mat3 =
+  result.x = lerp(t, a.x, b.x)
+  result.y = lerp(t, a.y, b.y)
+  result.t = lerp(t, a.t, b.t)
 
 # --------------------------------------------------------------------------------------------------
 
