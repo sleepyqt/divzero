@@ -46,6 +46,14 @@ func morton_3d(x, y, z: float32): uint32 =
   let zz = expand_bits(uint32 z)
   return xx * 4 + yy * 2 + zz
 
+
+func min*(a, b, c: float32): float32 =
+  result = min(a, min(b, c))
+
+
+func max*(a, b, c: float32): float32 =
+  result = max(a, max(b, c))
+
 # --------------------------------------------------------------------------------------------------
 
 proc selftest* =

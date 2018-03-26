@@ -1,5 +1,5 @@
 import std     / [math]
-import divzero / [vec2, mat3]
+import divzero / [vec2, mat3, mathfn]
 
 # --------------------------------------------------------------------------------------------------
 
@@ -45,6 +45,29 @@ type CollisionInfo* = object
   hit*: bool
   normal*: Vec2
   depth*: float32
+
+
+type Projection* = object
+  min*, max*: float32
+
+# --------------------------------------------------------------------------------------------------
+
+proc overlaps*(a, b: Projection): bool =
+  ## checks is two projections overlaps
+  if (a.min - b.max) > 0f: return false
+  if (b.min - a.max) > 0f: return false
+  result = true
+
+
+proc depth*(a, b: Projection): float32 =
+  ## returns projection overlap size
+  result = b.max - a.min
+
+# --------------------------------------------------------------------------------------------------
+
+func mtv*(info: CollisionInfo): Vec2 =
+  ## returns minimum translation vector
+  result = info.normal * info.depth
 
 # --------------------------------------------------------------------------------------------------
 # Rectangle
@@ -282,10 +305,30 @@ proc offset*(circle: Circle; pos: Vec2): Circle =
 # Edge
 # --------------------------------------------------------------------------------------------------
 
-proc `*`*(m: Mat3; e: Edge): Edge =
+func `*`*(m: Mat3; e: Edge): Edge =
   ## returns edge transformed by matrix
   result.p0 = m * e.p0
   result.p1 = m * e.p1
+
+
+func midpoint*(edge: Edge): Vec2 =
+  result.x = (edge.p0.x + edge.p1.x) * 0.5f
+  result.y = (edge.p0.y + edge.p1.y) * 0.5f
+
+
+func normal_cw*(edge: Edge): Vec2 =
+  result = direction(edge.p0, edge.p1).right
+
+
+func normal_ccw*(edge: Edge): Vec2 =
+  result = direction(edge.p0, edge.p1).left
+
+
+func project*(edge: Edge; axis: Vec2): Projection =
+  let p0 = dot(edge.p0, axis)
+  let p1 = dot(edge.p1, axis)
+  result.min = min(p0, p1)
+  result.max = max(p0, p1)
 
 # --------------------------------------------------------------------------------------------------
 # Plane2
@@ -420,6 +463,49 @@ proc `*`*(m: Mat3; hull: ConvexHull): ConvexHull =
   for i in 0 ..< hull.count:
     result.points[i] = m * hull.points[i]
 
+
+iterator points*(hull: ConvexHull): Vec2 =
+  for i in 0 ..< hull.count:
+    yield hull.points[i]
+
+
+iterator index_and_points*(hull: ConvexHull): (int, Vec2) =
+  for i in 0 ..< hull.count:
+    yield (i, hull.points[i])
+
+
+func project*(hull: ConvexHull; axis: Vec2): Projection =
+  ## project convex hull into axis. Axis must be normalized.
+  let proj = dot(axis, hull.points[0])
+  result.min = proj
+  result.max = proj
+  for i in 1 ..< hull.count:
+    let proj = dot(axis, hull.points[i])
+    result.min = min(result.min, proj)
+    result.max = max(result.max, proj)
+
+
+func bounds*(hull: ConvexHull): AABB2 =
+  result.min = hull.points[0]
+  result.max = hull.points[0]
+  for i in 1 ..< hull.count:
+    result.expand(hull.points[i])
+
+
+iterator planes*(hull: ConvexHull): Plane2 =
+  for i in 0 ..< hull.count:
+    let i0 = i
+    let i1 = (i + 1) mod hull.count
+    let p0 = hull.points[i0]
+    let p1 = hull.points[i1]
+    yield plane2_cw(p0, p1)
+
+
+func offset*(hull: ConvexHull; dir: Vec2): ConvexHull =
+  result.count = hull.count
+  for i, point in hull.index_and_points:
+    result.points[i] = point + dir
+
 # --------------------------------------------------------------------------------------------------
 # Triangle
 # --------------------------------------------------------------------------------------------------
@@ -429,6 +515,12 @@ proc triangle*(a, b, c: Vec2): Triangle =
   result.a = a
   result.b = b
   result.c = c
+
+
+proc triangle*(ax, ay, bx, by, cx, cy: float32): Triangle =
+  result.a.x = ax; result.a.y = ay
+  result.b.x = bx; result.b.y = by
+  result.c.x = cx; result.c.y = cy
 
 
 proc signed_area*(a, b, c: Vec2): float32 =
@@ -443,6 +535,49 @@ proc signed_area*(triangle: Triangle): float32 =
   let side1 = triangle.b - triangle.a
   let side2 = triangle.c - triangle.a
   result = cross(side1, side2)
+
+
+func edge_ab*(triangle: Triangle): Edge =
+  result.p0 = triangle.a
+  result.p1 = triangle.b
+
+
+func edge_bc*(triangle: Triangle): Edge =
+  result.p0 = triangle.b
+  result.p1 = triangle.c
+
+
+func edge_ca*(triangle: Triangle): Edge =
+  result.p0 = triangle.c
+  result.p1 = triangle.a
+
+
+func perimeter*(triangle: Triangle): float32 =
+  let side1 = triangle.b - triangle.a
+  let side2 = triangle.c - triangle.a
+  let side3 = triangle.c - triangle.b
+  result = len(side1) + len(side2) + len(side3)
+
+
+func `*`*(m: Mat3; triangle: Triangle): Triangle =
+  result.a = m * triangle.a
+  result.b = m * triangle.b
+  result.c = m * triangle.c
+
+
+func offset*(triangle: Triangle; dir: Vec2): Triangle =
+  result.a = triangle.a + dir
+  result.b = triangle.b + dir
+  result.c = triangle.c + dir
+
+
+func project*(triangle: Triangle; axis: Vec2): Projection =
+  ## project `triangle` into `axis`
+  let pa = dot(axis, triangle.a)
+  let pb = dot(axis, triangle.b)
+  let pc = dot(axis, triangle.c)
+  result.min = min(pa, pb, pc)
+  result.max = max(pa, pb, pc)
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
@@ -550,6 +685,43 @@ proc overlaps*(a: Circle; b: Plane2): bool =
   let dist = distance(b, a.pos)
   result = dist < a.radius
 
+
+func overlaps*(a: Triangle; b: Triangle): bool =
+  let axis1 = left(a.b - a.a)
+  let pa1 = project(a, axis1)
+  let pb1 = project(b, axis1)
+  if not overlaps(pa1, pb1): return false
+
+  let axis2 = left(a.c - a.b)
+  let pa2 = project(a, axis2)
+  let pb2 = project(b, axis2)
+  if not overlaps(pa2, pb2): return false
+
+  let axis3 = left(a.a - a.c)
+  let pa3 = project(a, axis3)
+  let pb3 = project(b, axis3)
+  if not overlaps(pa3, pb3): return false
+
+  result = true
+
+
+func overlaps*(a: Triangle; b: Plane2): bool =
+  let da = b.distance(a.a)
+  let db = b.distance(a.b)
+  let dc = b.distance(a.c)
+  result = (da <= 0f) or (db <= 0f) or (dc <= 0f)
+
+
+func overlaps*(a: ConvexHull; b: ConvexHull): bool =
+  for plane in a.planes:
+    let axis = plane.normal
+    let pa = a.project(axis)
+    let pb = b.project(axis)
+    if not overlaps(pa, pb):
+      # found separating axis
+      return false
+  result = true
+
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 
@@ -645,6 +817,76 @@ proc overlaps*(a: AABB2; b: AABB2; info: var CollisionInfo) =
         info.normal = vec2(0, 1f)
       else:
         info.normal = vec2(0, -1f)
+
+
+func overlaps*(a: Triangle; b: Plane2; info: var CollisionInfo) =
+  let da = b.distance(a.a)
+  let db = b.distance(a.b)
+  let dc = b.distance(a.c)
+  info.hit = (da <= 0f) or (db <= 0f) or (dc <= 0f)
+  if info.hit:
+    info.normal = b.normal
+    info.depth  = abs min(da, db, dc)
+
+
+func overlaps*(a: Triangle; b: Triangle; info: var CollisionInfo) =
+  let axis1 = left(a.b - a.a).normalize
+  let pa1 = project(a, axis1)
+  let pb1 = project(b, axis1)
+  if not overlaps(pa1, pb1):
+    return
+
+  info.normal = axis1; info.depth = depth(pa1, pb1)
+
+  let axis2 = left(a.c - a.b).normalize
+  let pa2 = project(a, axis2)
+  let pb2 = project(b, axis2)
+  if not overlaps(pa2, pb2):
+    return
+
+  let d2 = depth(pa2, pb2)
+  if abs(d2) < abs(info.depth): (info.normal = axis2; info.depth = d2)
+
+  let axis3 = left(a.a - a.c).normalize
+  let pa3 = project(a, axis3)
+  let pb3 = project(b, axis3)
+  if not overlaps(pa3, pb3):
+    return
+
+  let d3 = depth(pa3, pb3)
+  if abs(d3) < abs(info.depth): (info.normal = axis3; info.depth = d3)
+
+  info.hit = true
+
+
+func overlaps*(a: ConvexHull; b: ConvexHull; info: var CollisionInfo) =
+  info.depth = high float32
+
+  for plane in a.planes:
+    let axis = plane.normal
+    let pa = a.project(axis)
+    let pb = b.project(axis)
+    if not overlaps(pa, pb):
+      return
+    else:
+      let depth = depth(pa, pb)
+      if abs(depth) < abs(info.depth):
+        info.depth = depth
+        info.normal = axis
+
+  for plane in b.planes:
+    let axis = plane.normal
+    let pa = a.project(axis)
+    let pb = b.project(axis)
+    if not overlaps(pa, pb):
+      return
+    else:
+      let depth = depth(pa, pb)
+      if abs(depth) < abs(info.depth):
+        info.depth = depth
+        info.normal = axis
+
+  info.hit = true
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
