@@ -54,6 +54,14 @@ func min*(a, b, c: float32): float32 =
 func max*(a, b, c: float32): float32 =
   result = max(a, max(b, c))
 
+
+func min*(a, b, c, d: float32): float32 =
+  result = min(a, min(b, min(c, d)))
+
+
+func max*(a, b, c, d: float32): float32 =
+  result = max(a, max(b, max(c, d)))
+
 # --------------------------------------------------------------------------------------------------
 
 proc selftest* =

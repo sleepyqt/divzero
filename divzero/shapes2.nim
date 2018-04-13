@@ -301,6 +301,16 @@ proc offset*(circle: Circle; pos: Vec2): Circle =
   result.pos = circle.pos + pos
   result.radius = circle.radius
 
+
+func project*(circle: Circle; axis: Vec2): Projection =
+  let naxis = normalize(axis)
+  let p0 = circle.pos + (naxis * circle.radius)
+  let p1 = circle.pos - (naxis * circle.radius)
+  let proj0 = dot(axis, p0)
+  let proj1 = dot(axis, p1)
+  result.min = min(proj0, proj1)
+  result.max = max(proj0, proj1)
+
 # --------------------------------------------------------------------------------------------------
 # Edge
 # --------------------------------------------------------------------------------------------------
@@ -453,6 +463,33 @@ proc offset*(box: AABB2; dir: Vec2): AABB2 =
 proc `*`*(m: Mat3; box: AABB2): AABB2 =
   result.min = m * box.min
   result.max = m * box.max
+
+
+func top_left*(box: AABB2): Vec2 =
+  result = box.min
+
+
+func top_right*(box: AABB2): Vec2 =
+  result.x = box.max.x
+  result.y = box.min.y
+
+
+func bottom_left*(box: AABB2): Vec2 =
+  result.x = box.min.x
+  result.y = box.max.y
+
+
+func bottom_right*(box: AABB2): Vec2 =
+  result = box.max
+
+
+func project*(box: AABB2; axis: Vec2): Projection =
+  let p0 = dot(axis, box.top_left)
+  let p1 = dot(axis, box.top_right)
+  let p2 = dot(axis, box.bottom_left)
+  let p3 = dot(axis, box.bottom_right)
+  result.min = min(p0, p1, p2, p3)
+  result.max = max(p0, p1, p2, p3)
 
 # --------------------------------------------------------------------------------------------------
 # ConvexHull
@@ -659,32 +696,19 @@ proc overlaps*(a: Rectangle; b: Rectangle): bool =
   let over_y = (a.top < b.bottom) and (a.bottom > b.top)
   result = over_x and over_y
 
+# ConvexHull
 
-proc overlaps*(a: Circle; b: Circle): bool =
-  let r2 = a.radius + b.radius
-  result = distance_sq(a.pos, b.pos) < (r2 * r2)
+func overlaps*(a: ConvexHull; b: ConvexHull): bool =
+  for plane in a.planes:
+    let axis = plane.normal
+    let pa = a.project(axis)
+    let pb = b.project(axis)
+    if not overlaps(pa, pb):
+      # found separating axis
+      return false
+  result = true
 
-
-proc overlaps*(a: AABB2; b: AABB2): bool =
-  let d0 = b.max.x < a.min.x
-  let d1 = a.max.x < b.min.x
-  let d2 = b.max.y < a.min.y
-  let d3 = a.max.y < b.min.y
-  result = not (d0 or d1 or d2 or d3)
-
-
-proc overlaps*(a: AABB2; b: Circle): bool =
-  let L  = clamp(b.pos, a.min, a.max)
-  let ab = b.pos - L
-  let d2 = dot(ab, ab)
-  let r2 = b.radius * b.radius
-  result = d2 < r2
-
-
-proc overlaps*(a: Circle; b: Plane2): bool =
-  let dist = distance(b, a.pos)
-  result = dist < a.radius
-
+# Triangle
 
 func overlaps*(a: Triangle; b: Triangle): bool =
   let axis1 = left(a.b - a.a)
@@ -711,16 +735,33 @@ func overlaps*(a: Triangle; b: Plane2): bool =
   let dc = b.distance(a.c)
   result = (da <= 0f) or (db <= 0f) or (dc <= 0f)
 
+# AABB2
 
-func overlaps*(a: ConvexHull; b: ConvexHull): bool =
-  for plane in a.planes:
-    let axis = plane.normal
-    let pa = a.project(axis)
-    let pb = b.project(axis)
-    if not overlaps(pa, pb):
-      # found separating axis
-      return false
-  result = true
+proc overlaps*(a: AABB2; b: AABB2): bool =
+  let d0 = b.max.x < a.min.x
+  let d1 = a.max.x < b.min.x
+  let d2 = b.max.y < a.min.y
+  let d3 = a.max.y < b.min.y
+  result = not (d0 or d1 or d2 or d3)
+
+
+proc overlaps*(a: AABB2; b: Circle): bool =
+  let L  = clamp(b.pos, a.min, a.max)
+  let ab = b.pos - L
+  let d2 = dot(ab, ab)
+  let r2 = b.radius * b.radius
+  result = d2 < r2
+
+# Circle
+
+proc overlaps*(a: Circle; b: Circle): bool =
+  let r2 = a.radius + b.radius
+  result = distance_sq(a.pos, b.pos) < (r2 * r2)
+
+
+proc overlaps*(a: Circle; b: Plane2): bool =
+  let dist = distance(b, a.pos)
+  result = dist < a.radius
 
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
