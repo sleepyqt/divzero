@@ -133,7 +133,7 @@ proc cross*(a, b: Vec4): Vec4 =
   result.x = a.y * b.z - b.y * a.z
   result.y = a.z * b.x - b.z * a.x
   result.z = a.x * b.y - b.x * a.y
-  result.z = 0.0f
+  result.w = 0.0f
 
 # --------------------------------------------------------------------------------------------------
 

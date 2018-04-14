@@ -2,6 +2,11 @@ import std     / [math]
 import divzero / [vec4]
 
 ## This module implements 4x4 transformation matrix.
+## Uses right-handed coordinate system.
+## Viewing volume for vertex defined as:
+## -Wc ≤ Xc ≤ Wc
+## -Wc ≤ Xy ≤ Wc
+## -Wc ≤ Xz ≤ Wc
 ##
 ## A * B != B * A
 ## A * (B + C) = A * B + A * C
@@ -114,35 +119,39 @@ proc translate*(m: Mat4; x, y, z: float32): Mat4 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc look_at*(eye, target, up: Vec4): Mat4 =
-  let zaxis = normalize(target - eye)
-  let xaxis = normalize(cross(zaxis, up))
-  let yaxis = cross(xaxis, zaxis)
-  result.c0 = vec4(xaxis.x, yaxis.x, -zaxis.x, 0.0);
-  result.c1 = vec4(xaxis.y, yaxis.y, -zaxis.y, 0.0);
-  result.c2 = vec4(xaxis.z, yaxis.z, -zaxis.z, 0.0);
-  result.c3 = vec4(-xaxis.dot(eye), -yaxis.dot(eye), zaxis.dot(eye), 1.0);
+proc view_look_at*(eye, target, up: Vec4): Mat4 =
+  ## creates viewing matrix for camera
+  ## `eye` - camera position
+  ## `target` - camera target position
+  ## `up` - camera up vector
+  let f = normalize(target - eye)
+  let l = normalize(cross(f, up))
+  let u = cross(l, f)
+  result.c0 = vec4(l.x, u.x, -f.x, 0.0f)
+  result.c1 = vec4(l.y, u.y, -f.y, 0.0f)
+  result.c2 = vec4(l.z, u.z, -f.z, 0.0f)
+  result.c3 = vec4(-dot(l, eye), -dot(u, eye), dot(f, eye), 1f)
 
 
 proc ortho*(l, r, b, t, n, f: float32): Mat4 =
-  ## creates orthogonal projection matrix
-  let a: float32 = 2f / (r - l)
-  let b: float32 = 2f / (t - b)
-  let c: float32 = -2f / (f - n)
-  let d: float32 = -((r + l) / (r - l))
-  let e: float32 = -((t + b) / (t - b))
-  let f: float32 = -((f + n) / (f - n))
-  result.c0 = vec4(a,  0f, 0f, d);
-  result.c1 = vec4(0f, b,  0f, e);
-  result.c2 = vec4(0f, 0f, c,  f);
-  result.c3 = vec4(0f, 0f, 0f, 1f);
+  ## creates orthographics projection matrix
+  ## `l`, `r` - coordinates for the left and right vertical clipping planes
+  ## `b`, `t` - coordinates for the bottom and top horizontal clipping planes
+  ## `n`, `f` - distance to near and far clipping planes
+  result.c0 = vec4(2f / (r - l), 0f, 0f, 0f)
+  result.c1 = vec4(0f, 2f / (t - b), 0f, 0f)
+  result.c2 = vec4(0f, 0f, -2 / (f - n), 0f)
+  result.c3 = vec4(-((r+l)/(r-l)), -((t+b)/(t-b)), -((f+n)/(f-n)), 1f)
 
 
 proc persp*(fovy, aspect, znear, zfar: float32): Mat4 =
   ## creates perspective projection matrix
-  let deltaz: float32 = zfar - znear
-
-  result.c0.x = 1.0f / tan(0.5f * fovy * (PI / 180f))
+  ## `fovy` - horizontal field of view angle, in degrees
+  ## `aspect` - viewport aspect ratio (width / height)
+  ## `znear` - distance from the viewer to the near clipping plane
+  ## `zfar` - distance from the viewer to the far clipping plane
+  ## `zfar` > `znear` > 0f
+  result.c0.x = 1f / (tan(0.5f * fovy * (PI / 180f)))
   result.c0.y = 0f
   result.c0.z = 0f
   result.c0.w = 0f
@@ -154,12 +163,12 @@ proc persp*(fovy, aspect, znear, zfar: float32): Mat4 =
 
   result.c2.x = 0f
   result.c2.y = 0f
-  result.c2.z = -(zfar + znear) / deltaz
+  result.c2.z = -((zfar + znear) / (zfar - znear))
   result.c2.w = -1f
 
   result.c3.x = 0f
   result.c3.y = 0f
-  result.c3.z = -2 * znear * zfar / deltaz
+  result.c3.z = -((2f * znear * zfar) / (zfar - znear))
   result.c3.w = 0f
 
 # --------------------------------------------------------------------------------------------------
@@ -323,6 +332,14 @@ proc row2*(m: Mat4): Vec4 =
 
 proc row3*(m: Mat4): Vec4 =
   result = vec4(m.c0.w, m.c1.w, m.c2.w, m.c3.w)
+
+# --------------------------------------------------------------------------------------------------
+
+proc pretty*(m: Mat4): string =
+  result = $m.c0 & "\n"
+  result.add $m.c1 & "\n"
+  result.add $m.c2 & "\n"
+  result.add $m.c3
 
 # --------------------------------------------------------------------------------------------------
 
