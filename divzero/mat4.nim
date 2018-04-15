@@ -28,7 +28,7 @@ type Mat4* = object
 
 # --------------------------------------------------------------------------------------------------
 
-proc `*`*(a, b: Mat4): Mat4 =
+func `*`*(a, b: Mat4): Mat4 =
   result.c0.x = a.c0.x * b.c0.x + a.c1.x * b.c0.y + a.c2.x * b.c0.z + a.c3.x * b.c0.w
   result.c1.x = a.c0.x * b.c1.x + a.c1.x * b.c1.y + a.c2.x * b.c1.z + a.c3.x * b.c1.w
   result.c2.x = a.c0.x * b.c2.x + a.c1.x * b.c2.y + a.c2.x * b.c2.z + a.c3.x * b.c2.w
@@ -47,7 +47,9 @@ proc `*`*(a, b: Mat4): Mat4 =
   result.c3.w = a.c0.w * b.c3.x + a.c1.w * b.c3.y + a.c2.w * b.c3.z + a.c3.w * b.c3.w
 
 
-proc `*`*(m: Mat4; c: Vec4): Vec4 =
+func `*`*(m: Mat4; c: Vec4): Vec4 =
+  ## multiply matrix with vector.
+  ## ``c`` treated as column vector.
   result.x = m.c0.x * c.x + m.c1.x * c.y + m.c2.x * c.z + m.c3.x * c.w
   result.y = m.c0.y * c.x + m.c1.y * c.y + m.c2.y * c.z + m.c3.y * c.w
   result.z = m.c0.z * c.x + m.c1.z * c.y + m.c2.z * c.z + m.c3.z * c.w
@@ -55,7 +57,7 @@ proc `*`*(m: Mat4; c: Vec4): Vec4 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc mat4*(): Mat4 =
+func mat4*(): Mat4 =
   ## creates new identity matrix
   result.c0 = Vec4(x: 1.0f, y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: 1.0f, z: 0.0f, w: 0.0f)
@@ -63,7 +65,7 @@ proc mat4*(): Mat4 =
   result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
 
 
-proc mat4_t*(a: Vec4): Mat4 =
+func mat4_t*(a: Vec4): Mat4 =
   ## creates new translation matrix
   result.c0 = Vec4(x: 1.0f, y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: 1.0f, z: 0.0f, w: 0.0f)
@@ -71,7 +73,7 @@ proc mat4_t*(a: Vec4): Mat4 =
   result.c3 = Vec4(x: a.x,  y: a.y,  z: a.z,  w: 1.0f)
 
 
-proc mat4_s*(a: Vec4): Mat4 =
+func mat4_s*(a: Vec4): Mat4 =
   ## creates new scale matrix
   result.c0 = Vec4(x: a.x,  y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: a.y,  z: 0.0f, w: 0.0f)
@@ -79,7 +81,7 @@ proc mat4_s*(a: Vec4): Mat4 =
   result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
 
 
-proc mat4_rx*(phi: float32): Mat4 =
+func mat4_rx*(phi: float32): Mat4 =
   ## creates new matrix rotated around x axis
   let s = sin(phi)
   let c = cos(phi)
@@ -89,7 +91,7 @@ proc mat4_rx*(phi: float32): Mat4 =
   result.c3 = vec4(0.0, 0.0, 0.0, 1.0)
 
 
-proc mat4_ry*(phi: float32): Mat4 =
+func mat4_ry*(phi: float32): Mat4 =
   ## creates new matrix rotated around y axis
   let s = sin(phi)
   let c = cos(phi)
@@ -99,7 +101,7 @@ proc mat4_ry*(phi: float32): Mat4 =
   result.c3 = vec4(0.0, 0.0, 0.0, 1.0)
 
 
-proc mat4_rz*(phi: float32): Mat4 =
+func mat4_rz*(phi: float32): Mat4 =
   ## creates new matrix rotated around z axis
   let s = sin(phi)
   let c = cos(phi)
@@ -109,17 +111,17 @@ proc mat4_rz*(phi: float32): Mat4 =
   result.c3 = vec4(0.0, 0.0, 0.0, 1.0)
 
 
-proc mat4_rxyz*(a: Vec4): Mat4 =
+func mat4_rxyz*(a: Vec4): Mat4 =
   result = mat4_rz(a.z) * mat4_ry(a.y) * mat4_rx(a.x)
 
 # --------------------------------------------------------------------------------------------------
 
-proc translate*(m: Mat4; x, y, z: float32): Mat4 =
+func translate*(m: Mat4; x, y, z: float32): Mat4 =
   result = m * mat4_t(vec4(x, y, z, 1.0f))
 
 # --------------------------------------------------------------------------------------------------
 
-proc view_look_at*(eye, target, up: Vec4): Mat4 =
+func view_look_at*(eye, target, up: Vec4): Mat4 =
   ## creates viewing matrix for camera
   ## `eye` - camera position
   ## `target` - camera target position
@@ -133,7 +135,7 @@ proc view_look_at*(eye, target, up: Vec4): Mat4 =
   result.c3 = vec4(-dot(l, eye), -dot(u, eye), dot(f, eye), 1f)
 
 
-proc ortho*(l, r, b, t, n, f: float32): Mat4 =
+func ortho*(l, r, b, t, n, f: float32): Mat4 =
   ## creates orthographics projection matrix
   ## `l`, `r` - coordinates for the left and right vertical clipping planes
   ## `b`, `t` - coordinates for the bottom and top horizontal clipping planes
@@ -144,7 +146,7 @@ proc ortho*(l, r, b, t, n, f: float32): Mat4 =
   result.c3 = vec4(-((r+l)/(r-l)), -((t+b)/(t-b)), -((f+n)/(f-n)), 1f)
 
 
-proc persp*(fovy, aspect, znear, zfar: float32): Mat4 =
+func persp*(fovy, aspect, znear, zfar: float32): Mat4 =
   ## creates perspective projection matrix
   ## `fovy` - horizontal field of view angle, in degrees
   ## `aspect` - viewport aspect ratio (width / height)
@@ -173,14 +175,14 @@ proc persp*(fovy, aspect, znear, zfar: float32): Mat4 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc transpose*(m: Mat4): Mat4 =
+func transpose*(m: Mat4): Mat4 =
   result.c0 = vec4(m.c0.x, m.c1.x, m.c2.x, m.c3.x)
   result.c1 = vec4(m.c0.y, m.c1.y, m.c2.y, m.c3.y)
   result.c2 = vec4(m.c0.z, m.c1.z, m.c2.z, m.c3.z)
   result.c3 = vec4(m.c0.w, m.c1.w, m.c2.w, m.c3.w)
 
 
-proc inverse*(m: Mat4): Mat4 =
+func inverse*(m: Mat4): Mat4 =
   result.c0.x =  m.c1.y * m.c2.z * m.c3.w - m.c1.y * m.c2.w * m.c3.z -
                  m.c2.y * m.c1.z * m.c3.w + m.c2.y * m.c1.w * m.c3.z +
                  m.c3.y * m.c1.z * m.c2.w - m.c3.y * m.c1.w * m.c2.z
@@ -241,7 +243,7 @@ proc inverse*(m: Mat4): Mat4 =
   result.c3 = result.c3 * inv_det
 
 
-proc fast_inverse*(m: Mat4): Mat4 =
+func fast_inverse*(m: Mat4): Mat4 =
   result.c0.x = m.c0.x
   result.c0.y = m.c1.x
   result.c0.z = m.c2.x
@@ -263,7 +265,7 @@ proc fast_inverse*(m: Mat4): Mat4 =
   result.c3.w = 1.0f
 
 
-proc normalize_zaxis*(m: Mat4): Mat4 =
+func normalize_zaxis*(m: Mat4): Mat4 =
   result.c0 = normalize cross(m.c1, m.c2)
   result.c1 = normalize cross(m.c2, m.c0)
   result.c2 = normalize m.c2
@@ -271,7 +273,7 @@ proc normalize_zaxis*(m: Mat4): Mat4 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc world_to_window*(obj: Vec4; view, proj: Mat4; viewport: Vec4): Vec4 =
+func world_to_window*(obj: Vec4; view, proj: Mat4; viewport: Vec4): Vec4 =
   var i = proj * view * obj
 
   i.x /= i.w
@@ -291,7 +293,7 @@ proc world_to_window*(obj: Vec4; view, proj: Mat4; viewport: Vec4): Vec4 =
   result.w = 1.0f
 
 
-proc window_to_world*(win: Vec4; inv_vp: Mat4; viewport: Vec4): Vec4 =
+func window_to_world*(win: Vec4; inv_vp: Mat4; viewport: Vec4): Vec4 =
   var i = win
 
   i.x = (i.x - viewport.x) / viewport.z
@@ -313,29 +315,29 @@ proc window_to_world*(win: Vec4; inv_vp: Mat4; viewport: Vec4): Vec4 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc mat4_from_pitch_yaw*(pitch, yaw: float32; pos: Vec4): Mat4 =
+func mat4_from_pitch_yaw*(pitch, yaw: float32; pos: Vec4): Mat4 =
   result = mat4_t(pos) * (mat4_rz(yaw) * mat4_rx(pitch))
 
 # --------------------------------------------------------------------------------------------------
 
-proc row0*(m: Mat4): Vec4 =
+func row0*(m: Mat4): Vec4 =
   result = vec4(m.c0.x, m.c1.x, m.c2.x, m.c3.x)
 
 
-proc row1*(m: Mat4): Vec4 =
+func row1*(m: Mat4): Vec4 =
   result = vec4(m.c0.y, m.c1.y, m.c2.y, m.c3.y)
 
 
-proc row2*(m: Mat4): Vec4 =
+func row2*(m: Mat4): Vec4 =
   result = vec4(m.c0.z, m.c1.z, m.c2.z, m.c3.z)
 
 
-proc row3*(m: Mat4): Vec4 =
+func row3*(m: Mat4): Vec4 =
   result = vec4(m.c0.w, m.c1.w, m.c2.w, m.c3.w)
 
 # --------------------------------------------------------------------------------------------------
 
-proc pretty*(m: Mat4): string =
+func pretty*(m: Mat4): string =
   result = $m.c0 & "\n"
   result.add $m.c1 & "\n"
   result.add $m.c2 & "\n"

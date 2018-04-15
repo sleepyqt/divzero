@@ -3,133 +3,139 @@ import std / [math]
 # --------------------------------------------------------------------------------------------------
 
 type Vec4* = object
-  ## Coordinate in projective geometry
+  ## Homogeneous vector with four components.
   x*, y*, z*, w*: float32
 
 # --------------------------------------------------------------------------------------------------
 
-proc vec4*(x, y, z, w: float32): Vec4 {.inline.} =
+func vec4*(x, y, z, w: float32): Vec4 {.inline.} =
+  ## returns vector with components set to [``x``, ``y``, ``z``, ``w``]
   result = Vec4(x: x, y: y, z: z, w: w)
 
 
-proc vec4*(c: float32): Vec4 {.inline.} =
-  ## returns new coordinate with all components set to ``c``
+func vec4*(c: float32): Vec4 {.inline.} =
+  ## returns vector with all components set to ``c``
   result = Vec4(x: c, y: c, z: c, w: c)
 
 
-proc vec4*(): Vec4 {.inline.} =
-  ## returns new coordinate with all components set to ``0.0f``
+func vec4*(): Vec4 {.inline.} =
+  ## returns vector with all components set to ``0.0f``
   result = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 0.0f)
 
 # --------------------------------------------------------------------------------------------------
 
-proc xxxx*(v: Vec4): Vec4 {.inline.} =
-  ## swizle [1, 2, 3, 4] -> [1, 1, 1, 1]
+func xxxx*(v: Vec4): Vec4 {.inline.} =
+  ## returns swizzled vector [x, y, z, w] -> [x, x, x, x]
   result = Vec4(x: v.x, y: v.x, z: v.x, w: v.x)
 
 
-proc yyyy*(v: Vec4): Vec4 {.inline.} =
-  ## swizle [1, 2, 3, 4] -> [2, 2, 2, 2]
+func yyyy*(v: Vec4): Vec4 {.inline.} =
+  ## returns swizzled vector [x, y, z, w] -> [y, y, y, y]
   result = Vec4(x: v.y, y: v.y, z: v.y, w: v.y)
 
 
-proc zzzz*(v: Vec4): Vec4 {.inline.} =
-  ## swizle [1, 2, 3, 4] -> [3, 3, 3, 3]
+func zzzz*(v: Vec4): Vec4 {.inline.} =
+  ## returns swizzled vector [x, y, z, w] -> [z, z, z, z]
   result = Vec4(x: v.z, y: v.z, z: v.z, w: v.z)
 
 
-proc wwww*(v: Vec4): Vec4 {.inline.} =
-  ## swizle [1, 2, 3, 4] -> [4, 4, 4, 4]
+func wwww*(v: Vec4): Vec4 {.inline.} =
+  ## returns swizzled vector [x, y, z, w] -> [w, w, w, w]
   result = Vec4(x: v.w, y: v.w, z: v.w, w: v.w)
 
 
-proc xyz0*(v: Vec4): Vec4 {.inline.} =
-  ## swizle [1, 2, 3, 4] -> [1, 2, 3, 0]
+func xyz0*(v: Vec4): Vec4 {.inline.} =
+  ## returns swizzled vector [x, y, z, w] -> [x, y, z, 0]
   result = Vec4(x: v.x, y: v.y, z: v.z, w: 0.0f)
 
 
-proc xyz1*(v: Vec4): Vec4 {.inline.} =
-  ## swizle [1, 2, 3, 4] -> [1, 2, 3, 1]
+func xyz1*(v: Vec4): Vec4 {.inline.} =
+  ## returns swizzled vector [x, y, z, w] -> [x, y, z, 1]
   result = Vec4(x: v.x, y: v.y, z: v.z, w: 1.0f)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `==`*(a, b: Vec4): bool =
+func `==`*(a, b: Vec4): bool =
   result = (a.x == b.x) and (a.y == b.y) and (a.z == b.z) and (a.w == b.w)
 
 
-proc `!=`*(a, b: Vec4): bool =
+func `!=`*(a, b: Vec4): bool =
   result = (a.x != b.x) or (a.y != b.y) or (a.z != b.z) or (a.w != b.w)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `-`*(a: Vec4): Vec4 {.inline.} =
+func `-`*(a: Vec4): Vec4 {.inline.} =
   result = vec4(-a.x, -a.y, -a.z, -a.w)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `+`*(a, b: Vec4): Vec4 {.inline.} =
+func `+`*(a, b: Vec4): Vec4 {.inline.} =
   ## component wise addition
   result = vec4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w)
 
 
-proc `-`*(a, b: Vec4): Vec4 {.inline.} =
+func `-`*(a, b: Vec4): Vec4 {.inline.} =
   ## component wise substraction
   result = vec4(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w)
 
 
-proc `*`*(a, b: Vec4): Vec4 {.inline.} =
+func `*`*(a, b: Vec4): Vec4 {.inline.} =
   ## component wise multiply
   result = vec4(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w)
 
 
-proc `/`*(a, b: Vec4): Vec4 {.inline.} =
+func `/`*(a, b: Vec4): Vec4 {.inline.} =
   ## component wise division
   result = vec4(a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `+`*(a: Vec4; b: float32): Vec4 {.inline.} =
+func `+`*(a: Vec4; b: float32): Vec4 {.inline.} =
+  ## scalar addition
   result = vec4(a.x + b, a.y + b, a.z + b, a.w + b)
 
 
-proc `-`*(a: Vec4; b: float32): Vec4 {.inline.} =
+func `-`*(a: Vec4; b: float32): Vec4 {.inline.} =
+  ## scalar substraction
   result = vec4(a.x - b, a.y - b, a.z - b, a.w - b)
 
 
-proc `*`*(a: Vec4; b: float32): Vec4 {.inline.} =
+func `*`*(a: Vec4; b: float32): Vec4 {.inline.} =
+  ## scalar multiply
   result = vec4(a.x * b, a.y * b, a.z * b, a.w * b)
 
 
-proc `/`*(a: Vec4; b: float32): Vec4 {.inline.} =
+func `/`*(a: Vec4; b: float32): Vec4 {.inline.} =
+  ## scalar division
   result = vec4(a.x / b, a.y / b, a.z / b, a.w / b)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `+`*(a: float32; b: Vec4): Vec4 {.inline.} =
+func `+`*(a: float32; b: Vec4): Vec4 {.inline.} =
   result = vec4(a + b.x, a + b.y, a + b.z, a + b.w)
 
 
-proc `-`*(a: float32; b: Vec4): Vec4 {.inline.} =
+func `-`*(a: float32; b: Vec4): Vec4 {.inline.} =
   result = vec4(a - b.x, a - b.y, a - b.z, a - b.w)
 
 
-proc `*`*(a: float32; b: Vec4): Vec4 {.inline.} =
+func `*`*(a: float32; b: Vec4): Vec4 {.inline.} =
   result = vec4(a * b.x, a * b.y, a * b.z, a * b.w)
 
 
-proc `/`*(a: float32; b: Vec4): Vec4 {.inline.} =
+func `/`*(a: float32; b: Vec4): Vec4 {.inline.} =
   result = vec4(a / b.x, a / b.y, a / b.z, a / b.w)
 
 # --------------------------------------------------------------------------------------------------
 
-proc dot*(a, b: Vec4): float32 =
+func dot*(a, b: Vec4): float32 =
   ## returns the dot product of two vectors
   result = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w)
 
 
-proc cross*(a, b: Vec4): Vec4 =
-  ## returns the cross product of two vectors
+func cross*(a, b: Vec4): Vec4 =
+  ## returns a vector that is perpendicular to both vectors.
+  ## The magnitude of cross product is area of parallelogram formed by both vectors as sides.
   result.x = a.y * b.z - b.y * a.z
   result.y = a.z * b.x - b.z * a.x
   result.z = a.x * b.y - b.x * a.y
@@ -137,14 +143,16 @@ proc cross*(a, b: Vec4): Vec4 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc min*(a, b: Vec4): Vec4 {.inline.} =
+func min*(a, b: Vec4): Vec4 {.inline.} =
+  ## component wise `min` function
   result.x = min(a.x, b.x)
   result.y = min(a.y, b.y)
   result.z = min(a.z, b.z)
   result.w = min(a.w, b.w)
 
 
-proc max*(a, b: Vec4): Vec4 {.inline.} =
+func max*(a, b: Vec4): Vec4 {.inline.} =
+  ## component wise `max` function
   result.x = max(a.x, b.x)
   result.y = max(a.y, b.y)
   result.z = max(a.z, b.z)
@@ -152,7 +160,8 @@ proc max*(a, b: Vec4): Vec4 {.inline.} =
 
 # --------------------------------------------------------------------------------------------------
 
-proc len*(v: Vec4): float32 =
+func len*(v: Vec4): float32 =
+  ## returns length(magnitude) of vector
   let x2: float32 = v.x * v.x
   let y2: float32 = v.y * v.y
   let z2: float32 = v.z * v.z
@@ -160,27 +169,25 @@ proc len*(v: Vec4): float32 =
   result = sqrt(a)
 
 
-proc len_sq*(v: Vec4): float32 =
+func len_sq*(v: Vec4): float32 =
+  ## returns squared length of vector
   result = v.x * v.x + v.y * v.y + v.z * v.z
 
 # --------------------------------------------------------------------------------------------------
 
-proc normalize*(v: var Vec4) =
-  let m = v.len()
-  v = Vec4(x: v.x / m, y: v.y / m, z: v.z / m, w: 0.0f)
-
-
-proc normalize*(v: Vec4): Vec4 =
-  let m = v.len()
-  result = vec4(v.x / m, v.y / m, v.z / m, 0.0f)
+func normalize*(v: Vec4): Vec4 =
+  ## returns vector with same direction as ``v`` and magnitude ``1.0`` (unit vector)
+  let im = 1f / v.len
+  result = vec4(v.x * im, v.y * im, v.z * im, 0.0f)
 
 # --------------------------------------------------------------------------------------------------
 
-proc distance*(start, goal: Vec4): float32 =
-  result = len(start - goal)
+func distance*(a, b: Vec4): float32 =
+  ## returns distance between two points
+  result = len(a - b)
 
 
-proc reflect*(incident, normal: Vec4): Vec4 =
+func reflect*(incident, normal: Vec4): Vec4 =
   ## returns the reflection direction for an incident vector
   ## ``normal`` surface normal vector
   ## ``incident`` incident vector
@@ -188,7 +195,7 @@ proc reflect*(incident, normal: Vec4): Vec4 =
   result = incident - 2.0f * dot(normal, incident) * normal
 
 
-proc refract*(incident, normal: Vec4; eta: float32): Vec4 =
+func refract*(incident, normal: Vec4; eta: float32): Vec4 =
   ## returns the refraction direction for an incident vector
   ## ``normal`` surface normal vector
   ## ``incident`` incident vector
@@ -197,72 +204,75 @@ proc refract*(incident, normal: Vec4; eta: float32): Vec4 =
   if k < 0.0f: vec4() else: eta * incident - (eta * dot(normal, incident) + sqrt(k)) * normal
 
 
-proc direction*(a, b: Vec4): Vec4 =
+func direction*(a, b: Vec4): Vec4 =
   result = normalize(b - a)
 
 
-proc clamp*(v, min, max: Vec4): Vec4 =
+func clamp*(v, min, max: Vec4): Vec4 =
   result.x = clamp(v.x, min.x, max.x)
   result.y = clamp(v.y, min.y, max.y)
   result.z = clamp(v.z, min.z, max.z)
   result.w = clamp(v.w, min.w, max.w)
 
 
-proc saturate*(a: Vec4): Vec4 =
+func saturate*(a: Vec4): Vec4 =
+  ## returns vector with elements clamped in range [0, 1]
   result = clamp(a, vec4(0, 0, 0, 0), vec4(1, 1, 1, 1))
 
 # --------------------------------------------------------------------------------------------------
 
-proc cos*(a: Vec4): Vec4 =
+func cos*(a: Vec4): Vec4 =
+  ## component wise cosine function
   result.x = cos(a.x)
   result.y = cos(a.y)
   result.z = cos(a.z)
   result.w = cos(a.w)
 
 
-proc sin*(a: Vec4): Vec4 =
+func sin*(a: Vec4): Vec4 =
+  ## component wise sine function
   result.x = sin(a.x)
   result.y = sin(a.y)
   result.z = sin(a.z)
   result.w = sin(a.w)
 
 
-proc tan*(a: Vec4): Vec4 =
+func tan*(a: Vec4): Vec4 =
   result.x = tan(a.x)
   result.y = tan(a.y)
   result.z = tan(a.z)
   result.w = tan(a.w)
 
 
-proc abs*(a: Vec4): Vec4 =
+func abs*(a: Vec4): Vec4 =
   result.x = abs(a.x)
   result.y = abs(a.y)
   result.z = abs(a.z)
   result.w = abs(a.w)
 
 
-proc floor*(a: Vec4): Vec4 =
+func floor*(a: Vec4): Vec4 =
   result.x = floor(a.x)
   result.y = floor(a.y)
   result.z = floor(a.z)
   result.w = floor(a.w)
 
 
-proc ceil*(a: Vec4): Vec4 =
+func ceil*(a: Vec4): Vec4 =
   result.x = ceil(a.x)
   result.y = ceil(a.y)
   result.z = ceil(a.z)
   result.w = ceil(a.w)
 
 
-proc trunc*(a: Vec4): Vec4 =
+func trunc*(a: Vec4): Vec4 =
   result.x = trunc(a.x)
   result.y = trunc(a.y)
   result.z = trunc(a.z)
   result.w = trunc(a.w)
 
 
-proc round*(a: Vec4): Vec4 =
+func round*(a: Vec4): Vec4 =
   result.x = round(a.x)
   result.y = round(a.y)
   result.z = round(a.z)
@@ -270,7 +280,8 @@ proc round*(a: Vec4): Vec4 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc to_cartesian*(a: Vec4): Vec4 =
+func to_cartesian*(a: Vec4): Vec4 =
+  ## converts homogeneous vector to cartesian vector
   assert(a.w != 0.0f)
   result.x = a.x / a.w
   result.y = a.y / a.w
@@ -312,4 +323,5 @@ proc selftest* =
   check cross(vec4(1, 0, 0, 0), vec4(0, 1, 0, 0)) == vec4(0, 0, 1, 0)
 
   check saturate(vec4(10, 0, 3, 1)) == vec4(1, 0, 1, 1)
+
 

@@ -4,214 +4,216 @@ import divzero / [mathfn]
 # --------------------------------------------------------------------------------------------------
 
 type Vec2* = object
+  ## Vector with two components
   x*, y*: float32
 
 # --------------------------------------------------------------------------------------------------
 
-proc vec2*(x, y: float32): Vec2 {.inline.} =
+func vec2*(x, y: float32): Vec2 {.inline.} =
   result = Vec2(x: x, y: y)
 
 
-proc vec2*(c: float32): Vec2 {.inline.} =
+func vec2*(c: float32): Vec2 {.inline.} =
   result = Vec2(x: c, y: c)
 
 
-proc vec2*(): Vec2 {.inline.} =
+func vec2*(): Vec2 {.inline.} =
+  ## returns zero vector (0, 0)
   result = Vec2(x: 0.0f, y: 0.0f)
 
 # --------------------------------------------------------------------------------------------------
 
-proc xx*(v: Vec2): Vec2 {.inline.} =
+func xx*(v: Vec2): Vec2 {.inline.} =
   result = Vec2(x: v.x, y: v.x)
 
 
-proc yy*(v: Vec2): Vec2 {.inline.} =
+func yy*(v: Vec2): Vec2 {.inline.} =
   result = Vec2(x: v.y, y: v.y)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `-`*(a: Vec2): Vec2 {.inline.} =
+func `-`*(a: Vec2): Vec2 {.inline.} =
   result.x = -a.x
   result.y = -a.y
 
 # --------------------------------------------------------------------------------------------------
 
-proc `+`*(a, b: Vec2): Vec2 {.inline.} =
+func `+`*(a, b: Vec2): Vec2 {.inline.} =
   result.x = a.x + b.x
   result.y = a.y + b.y
 
 
-proc `-`*(a, b: Vec2): Vec2 {.inline.} =
+func `-`*(a, b: Vec2): Vec2 {.inline.} =
   result.x = a.x - b.x
   result.y = a.y - b.y
 
 
-proc `*`*(a, b: Vec2): Vec2 {.inline.} =
+func `*`*(a, b: Vec2): Vec2 {.inline.} =
   result.x = a.x * b.x
   result.y = a.y * b.y
 
 
-proc `/`*(a, b: Vec2): Vec2 {.inline.} =
+func `/`*(a, b: Vec2): Vec2 {.inline.} =
   result.x = a.x / b.x
   result.y = a.y / b.y
 
 
-proc `div`*(a, b: Vec2): Vec2 =
+func `div`*(a, b: Vec2): Vec2 =
   result.x = trunc(a.x / b.x)
   result.y = trunc(a.y / b.y)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `+`*(a: Vec2; b: float32): Vec2 {.inline.} =
+func `+`*(a: Vec2; b: float32): Vec2 {.inline.} =
   result.x = a.x + b
   result.y = a.y + b
 
 
-proc `-`*(a: Vec2; b: float32): Vec2 {.inline.} =
+func `-`*(a: Vec2; b: float32): Vec2 {.inline.} =
   result.x = a.x - b
   result.y = a.y - b
 
 
-proc `*`*(a: Vec2; b: float32): Vec2 {.inline.} =
+func `*`*(a: Vec2; b: float32): Vec2 {.inline.} =
   result.x = a.x * b
   result.y = a.y * b
 
 
-proc `/`*(a: Vec2; b: float32): Vec2 {.inline.} =
+func `/`*(a: Vec2; b: float32): Vec2 {.inline.} =
   result.x = a.x / b
   result.y = a.y / b
 
 
-proc `div`*(a: Vec2; b: float32): Vec2 =
+func `div`*(a: Vec2; b: float32): Vec2 =
+  ## scalar integer division (trunc a/b)
   result.x = trunc(a.x / b)
   result.y = trunc(a.y / b)
 
 # --------------------------------------------------------------------------------------------------
 
-proc `+`*(a: float32; b: Vec2): Vec2 {.inline.} =
+func `+`*(a: float32; b: Vec2): Vec2 {.inline.} =
   result.x = a + b.x
   result.y = a + b.y
 
 
-proc `-`*(a: float32; b: Vec2): Vec2 {.inline.} =
+func `-`*(a: float32; b: Vec2): Vec2 {.inline.} =
   result.x = a - b.x
   result.y = a - b.y
 
 
-proc `*`*(a: float32; b: Vec2): Vec2 {.inline.} =
+func `*`*(a: float32; b: Vec2): Vec2 {.inline.} =
   result.x = a * b.x
   result.y = a * b.y
 
 
-proc `/`*(a: float32; b: Vec2): Vec2 {.inline.} =
+func `/`*(a: float32; b: Vec2): Vec2 {.inline.} =
   result.x = a / b.x
   result.y = a / b.y
 
 # --------------------------------------------------------------------------------------------------
 
-proc `+=`*(a: var Vec2; b: Vec2) {.inline.} =
+func `+=`*(a: var Vec2; b: Vec2) {.inline.} =
   a.x = a.x + b.x
   a.y = a.y + b.y
 
 
-proc `-=`*(a: var Vec2; b: Vec2) {.inline.} =
+func `-=`*(a: var Vec2; b: Vec2) {.inline.} =
   a.x = a.x - b.x
   a.y = a.y - b.y
 
 # --------------------------------------------------------------------------------------------------
 
-proc `==`*(a, b: Vec2): bool =
+func `==`*(a, b: Vec2): bool =
   result = (a.x == b.x) and (a.y == b.y)
 
 
-proc `!=`*(a, b: Vec2): bool =
+func `!=`*(a, b: Vec2): bool =
   result = (a.x != b.x) or (a.y != b.y)
 
 
-proc `<`*(a, b: Vec2): bool {.inline.} =
+func `<`*(a, b: Vec2): bool {.inline.} =
   result = (a.x < b.x) and (a.y < b.y)
 
 
-proc `<=`*(a, b: Vec2): bool {.inline.} =
+func `<=`*(a, b: Vec2): bool {.inline.} =
   result = (a.x <= b.x) and (a.y <= b.y)
 
 
-proc `~=`*(a, b: Vec2): bool =
+func `~=`*(a, b: Vec2): bool =
   a.x ~= b.x and a.y ~= b.y
 
 # --------------------------------------------------------------------------------------------------
 
-proc min*(a, b: Vec2): Vec2 {.inline.} =
+func min*(a, b: Vec2): Vec2 {.inline.} =
   result.x = min(a.x, b.x)
   result.y = min(a.y, b.y)
 
 
-proc max*(a, b: Vec2): Vec2 {.inline.} =
+func max*(a, b: Vec2): Vec2 {.inline.} =
   result.x = max(a.x, b.x)
   result.y = max(a.y, b.y)
 
 
-proc clamp*(v, min, max: Vec2): Vec2 {.inline.} =
+func clamp*(v, min, max: Vec2): Vec2 {.inline.} =
   result.x = clamp(v.x, min.x, max.x)
   result.y = clamp(v.y, min.y, max.y)
 
 
-proc min*(a, b, c: Vec2): Vec2 {.inline.} =
+func min*(a, b, c: Vec2): Vec2 {.inline.} =
   result.x = min(min(a.x, b.x), c.x)
   result.y = min(min(a.y, b.y), c.y)
 
 
-proc max*(a, b, c: Vec2): Vec2 {.inline.} =
+func max*(a, b, c: Vec2): Vec2 {.inline.} =
   result.x = max(max(a.x, b.x), c.x)
   result.y = max(max(a.y, b.y), c.y)
 
 # --------------------------------------------------------------------------------------------------
 
-proc len_sq*(a: Vec2): float32 {.inline.} =
+func len_sq*(a: Vec2): float32 {.inline.} =
   result = a.x * a.x + a.y * a.y
 
 
-proc len*(a: Vec2): float32 {.inline.} =
+func len*(a: Vec2): float32 {.inline.} =
+  ## returns vector length(magnitude)
   result = sqrt(len_sq(a))
 
 
-proc normalize*(a: Vec2): Vec2 =
-  let  l = len(a)
-  do_assert(l != 0f)
-  let il = 1f / l
+func normalize*(a: Vec2): Vec2 =
+  let il = 1f / len(a)
   result = a * il
 
 # --------------------------------------------------------------------------------------------------
 
-proc distance*(start, goal: Vec2): float32 {.inline.} =
+func distance*(start, goal: Vec2): float32 {.inline.} =
   result = len(start - goal)
 
 
-proc distance_sq*(start, goal: Vec2): float32 {.inline.} =
+func distance_sq*(start, goal: Vec2): float32 {.inline.} =
   result = len_sq(start - goal)
 
 
-proc distance_manhattan*(start, goal: Vec2): float32 {.inline.} =
+func distance_manhattan*(start, goal: Vec2): float32 {.inline.} =
   result = abs(start.x - goal.x) + abs(start.y - goal.y)
 
 
-proc distance_chebushev*(start, goal: Vec2): float32 {.inline.} =
+func distance_chebushev*(start, goal: Vec2): float32 {.inline.} =
   result = max(abs(start.x - goal.x), abs(start.y - goal.y))
 
 # --------------------------------------------------------------------------------------------------
 
-proc dot*(a, b: Vec2): float32 =
+func dot*(a, b: Vec2): float32 =
   ## returns the dot product of two vectors
   result = a.x * b.x + a.y * b.y
 
 
-proc cross*(a, b: Vec2): float32 =
-  ## returns the magnitude if cross product of two vectors
+func cross*(a, b: Vec2): float32 =
+  ## returns the magnitude of cross product
   result = a.x * b.y - a.y * b.x
 
 # --------------------------------------------------------------------------------------------------
 
-proc reflect*(incident, normal: Vec2): Vec2 =
+func reflect*(incident, normal: Vec2): Vec2 =
   ## returns the reflection direction for an incident vector
   ## ``normal`` surface normal vector
   ## ``incident`` incident vector
@@ -219,19 +221,19 @@ proc reflect*(incident, normal: Vec2): Vec2 =
   result = incident - 2.0f * dot(normal, incident) * normal
 
 
-proc reflect*(incident, normal: Vec2; restitution: float32): Vec2 =
+func reflect*(incident, normal: Vec2; restitution: float32): Vec2 =
   result = incident - (1f + restitution) * normal * dot(normal, incident)
 
 
-proc direction*(a, b: Vec2): Vec2 =
+func direction*(a, b: Vec2): Vec2 =
   result = normalize(b - a)
 
 
-proc slide*(incident, normal: Vec2): Vec2 =
+func slide*(incident, normal: Vec2): Vec2 =
   result = incident - normal * dot(incident, normal)
 
 
-proc refract*(incident, normal: Vec2; eta: float32): Vec2 =
+func refract*(incident, normal: Vec2; eta: float32): Vec2 =
   var k: float32 = 1.0f - eta * eta * (1.0f - dot(normal, incident) * dot(normal, incident))
   if k < 0.0f: vec2() else: eta * incident - (eta * dot(normal, incident) + sqrt(k)) * normal
 
@@ -243,57 +245,49 @@ func lerp*(t: float32; a, b: Vec2): Vec2 =
 
 # --------------------------------------------------------------------------------------------------
 
-proc outside*(p, min, max: Vec2): bool =
-  if p.x < min.x: return true
-  if p.y < min.y: return true
-  if p.x > max.x: return true
-  if p.y > max.y: return true
-
-# --------------------------------------------------------------------------------------------------
-
-proc round*(a: Vec2): Vec2 {.inline.} =
+func round*(a: Vec2): Vec2 {.inline.} =
   result.x = round(a.x)
   result.y = round(a.y)
 
 
-proc trunc*(a: Vec2): Vec2 {.inline.} =
+func trunc*(a: Vec2): Vec2 {.inline.} =
   result.x = trunc(a.x)
   result.y = trunc(a.y)
 
 
-proc floor*(a: Vec2): Vec2 {.inline.} =
+func floor*(a: Vec2): Vec2 {.inline.} =
   result.x = floor(a.x)
   result.y = floor(a.y)
 
 
-proc ceil*(a: Vec2): Vec2 {.inline.} =
+func ceil*(a: Vec2): Vec2 {.inline.} =
   result.x = ceil(a.x)
   result.y = ceil(a.y)
 
 
-proc abs*(a: Vec2): Vec2 =
+func abs*(a: Vec2): Vec2 =
   result.x = abs(a.x)
   result.y = abs(a.y)
 
 # --------------------------------------------------------------------------------------------------
 
-proc left*(a: Vec2): Vec2 {.inline.} =
+func left*(a: Vec2): Vec2 {.inline.} =
   ## return vector rotated by 90 degrees counter clockwise
   result = vec2(a.y, -a.x)
 
 
-proc right*(a: Vec2): Vec2 {.inline.} =
+func right*(a: Vec2): Vec2 {.inline.} =
   ## return vector rotated by 90 degrees clockwise
   result = vec2(-a.y, a.x)
 
 # --------------------------------------------------------------------------------------------------
 
-proc low*(a: typedesc[Vec2]): Vec2 =
+func low*(a: typedesc[Vec2]): Vec2 =
   result.x = low(float32)
   result.y = low(float32)
 
 
-proc high*(a: typedesc[Vec2]): Vec2 =
+func high*(a: typedesc[Vec2]): Vec2 =
   result.x = high(float32)
   result.y = high(float32)
 
