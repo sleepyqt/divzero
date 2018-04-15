@@ -95,9 +95,9 @@ func mat4_ry*(phi: float32): Mat4 =
   ## creates new matrix rotated around y axis
   let s = sin(phi)
   let c = cos(phi)
-  result.c0 = vec4(c  , 0.0, s  , 0.0)
+  result.c0 = vec4(c  , 0.0, -s , 0.0)
   result.c1 = vec4(0.0, 1.0, 0.0, 0.0)
-  result.c2 = vec4(-s , 0.0, c  , 0.0)
+  result.c2 = vec4(s  , 0.0, c  , 0.0)
   result.c3 = vec4(0.0, 0.0, 0.0, 1.0)
 
 
