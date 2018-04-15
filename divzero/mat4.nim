@@ -315,28 +315,6 @@ func window_to_world*(win: Vec4; inv_vp: Mat4; viewport: Vec4): Vec4 =
 
 # --------------------------------------------------------------------------------------------------
 
-func mat4_from_pitch_yaw*(pitch, yaw: float32; pos: Vec4): Mat4 =
-  result = mat4_t(pos) * (mat4_rz(yaw) * mat4_rx(pitch))
-
-# --------------------------------------------------------------------------------------------------
-
-func row0*(m: Mat4): Vec4 =
-  result = vec4(m.c0.x, m.c1.x, m.c2.x, m.c3.x)
-
-
-func row1*(m: Mat4): Vec4 =
-  result = vec4(m.c0.y, m.c1.y, m.c2.y, m.c3.y)
-
-
-func row2*(m: Mat4): Vec4 =
-  result = vec4(m.c0.z, m.c1.z, m.c2.z, m.c3.z)
-
-
-func row3*(m: Mat4): Vec4 =
-  result = vec4(m.c0.w, m.c1.w, m.c2.w, m.c3.w)
-
-# --------------------------------------------------------------------------------------------------
-
 func pretty*(m: Mat4): string =
   result = $m.c0 & "\n"
   result.add $m.c1 & "\n"

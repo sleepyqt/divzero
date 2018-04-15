@@ -6,7 +6,9 @@ const
   π* = PI
 
 proc lerp*(t: float32; a, b: float32): float32 =
-  result = (1f  - t) * a + t * b
+  ## linearly interpolate between ``a`` and ``b``.
+  ## ``t`` must be in [0 .. 1] range
+  result = (1f - t) * a + t * b
 
 
 proc smoothstep*(edge0, edge1, x: float32): float32 =
@@ -47,6 +49,10 @@ func morton_3d(x, y, z: float32): uint32 =
   return xx * 4 + yy * 2 + zz
 
 
+func fma*(a, b, c: float32): float32 =
+  result = a * b + c
+
+
 func min*(a, b, c: float32): float32 =
   result = min(a, min(b, c))
 
@@ -61,6 +67,26 @@ func min*(a, b, c, d: float32): float32 =
 
 func max*(a, b, c, d: float32): float32 =
   result = max(a, max(b, max(c, d)))
+
+
+func rsqrt*(a: float32): float32 =
+  result = 1f / sqrt(a)
+
+
+func sin_poly*(x: float32): float32 =
+  const a = -1f / 6f
+  const b = +1f / 120f
+  const c = -1f / 5040f
+  const d = +1f / 362880f
+  const e = -1f / 39916800f
+
+  when true:
+    let x3  = x * x * x
+    let x5  = x * x * x * x * x
+    let x7  = x * x * x * x * x * x * x
+    let x9  = x * x * x * x * x * x * x * x * x
+    let x11 = x * x * x * x * x * x * x * x * x * x * x
+    result = (x) + (a * x3) + (b * x5) + (c * x7) + (d * x9) + (e * x11)
 
 # --------------------------------------------------------------------------------------------------
 
