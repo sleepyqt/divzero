@@ -35,7 +35,7 @@ func quat4*(x, y, z, w: float32): Quat4 =
 # --------------------------------------------------------------------------------------------------
 
 func len_sq*(quat: Quat4): float32 =
-  result = quat.x * quat.x + quat.y * quat.y + quat.z * quat.z + quat.w * quat.w
+  result = (quat.x * quat.x) + (quat.y * quat.y) + (quat.z * quat.z) + (quat.w * quat.w)
 
 
 func len*(quat: Quat4): float32 =
@@ -126,8 +126,8 @@ func nlerp*(t: float32; a, b: Quat4): Quat4 =
 
 
 func slerp*(t: float32; a, b: Quat4): Quat4 =
-  let cosom = dot(a, b)
-  let abs_cosom = abs(cosom)
+  let cosom: float32 = dot(a, b)
+  let abs_cosom: float32 = abs(cosom)
   var scale0: float32
   var scale1: float32
   if (1f - abs_cosom) > 1e-6f:

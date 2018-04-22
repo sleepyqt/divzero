@@ -5,30 +5,46 @@ import std / [math]
 const
   π* = PI
 
-proc lerp*(t: float32; a, b: float32): float32 =
+
+func fract*(x: float32): float32 =
+  ## returns the fractional part of ``x``.
+  x - floor(x)
+
+
+func lerp*(t: float32; a, b: float32): float32 =
   ## linearly interpolate between ``a`` and ``b``.
   ## ``t`` must be in [0 .. 1] range
-  result = (1f - t) * a + t * b
+  (1f - t) * a + t * b
 
 
-proc smoothstep*(edge0, edge1, x: float32): float32 =
+func smoothstep*(x, edge0, edge1: float32): float32 =
+  ## performs Hermite interpolation between two values.
+  ## ``edge0`` - lower edge of the Hermite function.
+  ## ``edge1`` - higher edge.
+  ## ``x`` - value to interpolate.
   let t = clamp((x - edge0) / (edge1 - edge0), 0f, 1f)
   result = t * t * (3f - 2f * t)
 
 
-proc step*(edge, x: float32): float32 =
-  result = if x < edge: 0f else: 1f
+func smootherstep*(x, edge0, edge1: float32): float32 =
+  let t = clamp(x, 0f, 1f)
+  let r = t * t * t * (t * (6f * t - 15f) + 10f)
+  lerp(r, edge0, edge1)
 
 
-proc `~=`*(x, y: float32): bool =
+func step*(edge, x: float32): float32 =
+  if x < edge: 0f else: 1f
+
+
+func `~=`*(x, y: float32): bool =
   abs(x - y) < 0.000001
 
 
-proc expand_bits*(v: uint32): uint32 =
+func expand_bits*(v: uint32): uint32 =
   ## expands 10bit interger into 30 bits by inserting 2 zeros after each bit.
-  ## 1111111111 -> 100100100100100100100100100100
-  ## 0000000000 -> 000000000000000000000000000000
-  ##               _00_00_00_00_00_00_00_00_00_00
+  ## 1111111111 -> 100100100100100100100100100100.
+  ## 0000000000 -> 000000000000000000000000000000.
+  ##               _00_00_00_00_00_00_00_00_00_00.
   var v = v
   v = (v * 0x00010001u32) and 0xFF0000FFu32
   v = (v * 0x00000101u32) and 0x0F00F00Fu32
@@ -50,7 +66,7 @@ func morton_3d(x, y, z: float32): uint32 =
 
 
 func fma*(a, b, c: float32): float32 =
-  result = a * b + c
+   a * b + c
 
 
 func min*(a, b, c: float32): float32 =
@@ -80,13 +96,24 @@ func sin_poly*(x: float32): float32 =
   const d = +1f / 362880f
   const e = -1f / 39916800f
 
-  when true:
+  when false:
     let x3  = x * x * x
     let x5  = x * x * x * x * x
     let x7  = x * x * x * x * x * x * x
     let x9  = x * x * x * x * x * x * x * x * x
     let x11 = x * x * x * x * x * x * x * x * x * x * x
     result = (x) + (a * x3) + (b * x5) + (c * x7) + (d * x9) + (e * x11)
+
+  when true:
+    let z = x * x
+    result = e
+    result = result * z + d
+    result = result * z + c
+    result = result * z + b
+    result = result * z + a
+    result = result * z + 1f
+    result = result * x
+
 
 # --------------------------------------------------------------------------------------------------
 
