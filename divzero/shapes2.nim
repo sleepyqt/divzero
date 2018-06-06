@@ -3,6 +3,10 @@ import divzero / [vec2, mat3, mathfn]
 
 # --------------------------------------------------------------------------------------------------
 
+include divzero.xpragmas
+
+# --------------------------------------------------------------------------------------------------
+
 type Rectangle* = object
   pos*: Vec2
   size*: Vec2
@@ -409,77 +413,77 @@ proc `*`*(m: Mat3; plane: Plane2): Plane2 =
 # AABB2
 # --------------------------------------------------------------------------------------------------
 
-proc aabb2*(min, max: Vec2): AABB2 =
+proc aabb2*(min, max: Vec2): AABB2 {.inline.} =
   ## builds AABB from a two points
   result.min = min
   result.max = max
 
 
-proc aabb2*(point: Vec2): AABB2 =
+proc aabb2*(point: Vec2): AABB2 {.inline.} =
   ## builds AABB from a point
   result.min = point
   result.max = point
 
 
-proc aabb2*(circle: Circle): AABB2 =
+proc aabb2*(circle: Circle): AABB2 {.inline.} =
   ## builds AABB from a circle
   result.min = circle.pos - vec2(circle.radius, circle.radius)
   result.max = circle.pos + vec2(circle.radius, circle.radius)
 
 
-proc aabb2*(triangle: Triangle): AABB2 =
+proc aabb2*(triangle: Triangle): AABB2 {.inline.} =
   ## build AABB from triangle
   result.min = min(triangle.a, triangle.b, triangle.c)
   result.max = max(triangle.a, triangle.b, triangle.c)
 
 
-proc size*(box: AABB2): Vec2 =
+proc size*(box: AABB2): Vec2 {.inline.} =
   result = box.max - box.min
 
 
-proc half_size*(box: AABB2): Vec2 =
+proc half_size*(box: AABB2): Vec2 {.inline.} =
   result = box.size * 0.5f
 
 
-proc center*(box: AABB2): Vec2 =
+proc center*(box: AABB2): Vec2 {.inline.} =
   result = (box.min + box.max) * 0.5f
 
 
-proc expand*(box: var AABB2; point: Vec2) =
+proc expand*(box: var AABB2; point: Vec2) {.inline.} =
   box.min = min(box.min, point)
   box.max = max(box.max, point)
 
 
-proc expand*(box: var AABB2; b: AABB2) =
+proc expand*(box: var AABB2; b: AABB2) {.inline.} =
   box.min = min(box.min, b.min)
   box.max = max(box.max, b.max)
 
 
-proc offset*(box: AABB2; dir: Vec2): AABB2 =
+proc offset*(box: AABB2; dir: Vec2): AABB2 {.inline.} =
   result.min = box.min + dir
   result.max = box.max + dir
 
 
-proc `*`*(m: Mat3; box: AABB2): AABB2 =
+proc `*`*(m: Mat3; box: AABB2): AABB2 {.inline.} =
   result.min = m * box.min
   result.max = m * box.max
 
 
-func top_left*(box: AABB2): Vec2 =
+func top_left*(box: AABB2): Vec2 {.inline.} =
   result = box.min
 
 
-func top_right*(box: AABB2): Vec2 =
+func top_right*(box: AABB2): Vec2 {.inline.} =
   result.x = box.max.x
   result.y = box.min.y
 
 
-func bottom_left*(box: AABB2): Vec2 =
+func bottom_left*(box: AABB2): Vec2 {.inline.} =
   result.x = box.min.x
   result.y = box.max.y
 
 
-func bottom_right*(box: AABB2): Vec2 =
+func bottom_right*(box: AABB2): Vec2 {.inline.} =
   result = box.max
 
 
@@ -547,7 +551,7 @@ func offset*(hull: ConvexHull; dir: Vec2): ConvexHull =
 # Triangle
 # --------------------------------------------------------------------------------------------------
 
-proc triangle*(a, b, c: Vec2): Triangle =
+proc triangle*(a, b, c: Vec2): Triangle {.inline.} =
   ## builds triangle from tree vertices
   result.a = a
   result.b = b
@@ -737,20 +741,50 @@ func overlaps*(a: Triangle; b: Plane2): bool =
 
 # AABB2
 
-proc overlaps*(a: AABB2; b: AABB2): bool =
-  let d0 = b.max.x < a.min.x
-  let d1 = a.max.x < b.min.x
-  let d2 = b.max.y < a.min.y
-  let d3 = a.max.y < b.min.y
-  result = not (d0 or d1 or d2 or d3)
+func overlaps*(a: AABB2; b: AABB2): bool =
+  let d0 = int(b.max.x < a.min.x)
+  let d1 = int(a.max.x < b.min.x)
+  let d2 = int(b.max.y < a.min.y)
+  let d3 = int(a.max.y < b.min.y)
+  result = not bool(d0 or d1 or d2 or d3)
 
 
-proc overlaps*(a: AABB2; b: Circle): bool =
+func overlaps*(a: AABB2; b: Circle): bool =
   let L  = clamp(b.pos, a.min, a.max)
   let ab = b.pos - L
   let d2 = dot(ab, ab)
   let r2 = b.radius * b.radius
   result = d2 < r2
+
+
+func overlaps*(a: AABB2; b: ConvexHull): bool =
+  for plane in b.planes:
+    let axis = plane.normal
+    let pa = a.project(axis)
+    let pb = b.project(axis)
+    if not overlaps(pa, pb):
+      # found separating axis
+      return false
+  result = true
+
+
+func overlaps*(a: AABB2; b: Triangle): bool =
+  let axis1 = left(b.b - b.a)
+  let pa1 = project(a, axis1)
+  let pb1 = project(b, axis1)
+  if not overlaps(pa1, pb1): return false
+
+  let axis2 = left(b.c - b.b)
+  let pa2 = project(a, axis2)
+  let pb2 = project(b, axis2)
+  if not overlaps(pa2, pb2): return false
+
+  let axis3 = left(b.a - b.c)
+  let pa3 = project(a, axis3)
+  let pb3 = project(b, axis3)
+  if not overlaps(pa3, pb3): return false
+
+  result = true
 
 # Circle
 
@@ -983,3 +1017,36 @@ proc point_cloud_size*(points: open_array[Vec2]): Vec2 =
     maxp = max(maxp, point)
     minp = min(minp, point)
   result = maxp - minp
+
+# --------------------------------------------------------------------------------------------------
+
+proc selftest* =
+  block: # Aabb2
+    var a1 = aabb2(vec2(-1, -1), vec2(+1, +1))
+    var a2 = aabb2(vec2(+2, +2), vec2(+3, +3))
+    var a3 = aabb2(vec2(-2, -2), vec2(+2, +2))
+    var a4 = aabb2(vec2(-3, -3), vec2(+3, +3))
+    do_assert(overlaps(a1, a2) == false)
+    do_assert(overlaps(a1, a1) == true)
+    do_assert(overlaps(a2, a2) == true)
+    do_assert(overlaps(a3, a3) == true)
+    do_assert(overlaps(a1, a3) == true)
+    do_assert(overlaps(a3, a1) == true)
+    do_assert(overlaps(a4, a3) == true)
+    do_assert(overlaps(a1, a4) == true)
+    do_assert(overlaps(a4, a2) == true)
+
+    do_assert(inside(a1, vec2(+0f, +0f)) == true)
+    do_assert(inside(a1, vec2(+2f, +0f)) == false)
+    do_assert(inside(a1, vec2(+0f, +2f)) == false)
+    do_assert(inside(a1, vec2(+2f, +2f)) == false)
+    do_assert(inside(a1, vec2(+0f, -2f)) == false)
+    do_assert(inside(a1, vec2(-2f, -2f)) == false)
+    do_assert(inside(a1, vec2(-2f, +2f)) == false)
+    do_assert(inside(a1, vec2(0.1f, 0.1f)) == true)
+
+  block:
+    discard
+
+  echo "shapes2.selftest ok"
+

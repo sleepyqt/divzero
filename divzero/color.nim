@@ -10,11 +10,11 @@ type SrgbColor* = Color
 
 # --------------------------------------------------------------------------------------------------
 
-proc color*(r, g, b, a: float32): Color =
+func color*(r, g, b, a: float32): Color {.inline.} =
   result = Color(r: r, g: g, b: b, a: a)
 
 
-proc color*(hex: uint32): Color =
+func color*(hex: uint32): Color {.inline.} =
   let r = uint8((hex and 0xFF_00_00_00u32) shr 24)
   let g = uint8((hex and 0x00_FF_00_00u32) shr 16)
   let b = uint8((hex and 0x00_00_FF_00u32) shr 8)
@@ -25,7 +25,14 @@ proc color*(hex: uint32): Color =
   result.a = float32(a) / 255.0f
 
 
-proc rgba8*(r, g, b, a: uint8): Color =
+func color*(gray: float32): Color {.inline.} =
+  result.r = gray
+  result.g = gray
+  result.b = gray
+  result.a = 1f
+
+
+func rgba8*(r, g, b, a: uint8): Color {.inline.} =
   result.r = float32(r) / 255.0f
   result.g = float32(g) / 255.0f
   result.b = float32(b) / 255.0f
@@ -105,10 +112,9 @@ proc to_linear*(cs: float32): float32 =
 
 proc to_srgb*(cl: float32): float32 =
   let c = clamp(cl, 0f, 1f)
-  if c < 0.0031308f:
-    12.92f * c
-  else:
-    1.055f * pow(c, 0.4166f) - 0.055f
+  let X = 12.92f * c
+  let Y = 1.055f * pow(c, 0.4166f) - 0.055f
+  if c >= 0.0031308f: Y else: X
 
 
 proc to_linear*(color: SrgbColor): Color =

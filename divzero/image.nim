@@ -9,6 +9,7 @@ type ImageFormat* = enum
   IF_BGR_888 = 3
   IF_SABGR_8888 = 4
   IF_SBGR_888 = 5
+  IF_GRAY_16 = 6
 
 const format_stride = [
   0, # IF_NONE
@@ -17,6 +18,7 @@ const format_stride = [
   3, # IF_BGR_888
   4, # IF_SABGR_8888
   3, # IF_SBGR_888
+  2, # IF_GRAY_16
 ]
 
 type ImageFlags* {.pure.} = enum
@@ -56,6 +58,17 @@ proc create_image*(width, height: int32; format: ImageFormat; flags: set[ImageFl
   result.pitch   = roundup((result.width * result.stride), ROW_ALIGNMENT)
   result.size    = result.pitch * result.height
   result.data    = alloc(result.size)
+
+
+proc create_image*(width, height: int32; format: ImageFormat; flags: set[ImageFlags]; data: pointer): Image =
+  result.width   = width
+  result.height  = height
+  result.stride  = stride(format)
+  result.format  = format
+  result.flags   = flags
+  result.pitch   = roundup((result.width * result.stride), ROW_ALIGNMENT)
+  result.size    = result.pitch * result.height
+  result.data    = data
 
 
 proc destroy*(image: var Image) =
@@ -124,6 +137,11 @@ proc set_pixel_sabgr_8888*(image: var Image; x, y: int32; color: Color) =
 proc set_pixel_gray_8*(image: var Image; x, y: int32; color: Color) =
   let i = sample2d(image.data, image.pitch, 1, x, y)
   cast[ptr uint8](i)[] = encode_gray_8(color)
+
+
+proc set_pixel_gray_16*(image: var Image; x, y: int32; color: uint16) =
+  let i = sample2d(image.data, image.pitch, 2, x, y)
+  cast[ptr uint16](i)[] = color
 
 
 proc set_pixel*(image: var Image; x, y: int32; color: Color) =

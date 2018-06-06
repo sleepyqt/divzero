@@ -3,6 +3,10 @@ import divzero / [mathfn]
 
 # --------------------------------------------------------------------------------------------------
 
+include divzero.xpragmas
+
+# --------------------------------------------------------------------------------------------------
+
 type Vec2* = object
   ## Vector with two components
   x*, y*: float32
@@ -62,6 +66,11 @@ func `div`*(a, b: Vec2): Vec2 =
   result.x = trunc(a.x / b.x)
   result.y = trunc(a.y / b.y)
 
+
+func floor_div*(a, b: Vec2): Vec2 =
+  result.x = floor(a.x / b.x)
+  result.y = floor(a.y / b.y)
+
 # --------------------------------------------------------------------------------------------------
 
 func `+`*(a: Vec2; b: float32): Vec2 {.inline.} =
@@ -88,6 +97,16 @@ func `div`*(a: Vec2; b: float32): Vec2 =
   ## scalar integer division (trunc a/b)
   result.x = trunc(a.x / b)
   result.y = trunc(a.y / b)
+
+
+func floor_div*(a: Vec2; b: float32): Vec2 =
+  result.x = floor(a.x / b)
+  result.y = floor(a.y / b)
+
+
+func `mod`*(a: Vec2; b: float32): Vec2 =
+  result.x = a.x mod b
+  result.y = a.y mod b
 
 # --------------------------------------------------------------------------------------------------
 
@@ -202,12 +221,12 @@ func distance_chebushev*(start, goal: Vec2): float32 {.inline.} =
 
 # --------------------------------------------------------------------------------------------------
 
-func dot*(a, b: Vec2): float32 =
+func dot*(a, b: Vec2): float32 {.inline.} =
   ## returns the dot product of two vectors
   result = a.x * b.x + a.y * b.y
 
 
-func cross*(a, b: Vec2): float32 =
+func cross*(a, b: Vec2): float32 {.inline.} =
   ## returns the magnitude of cross product
   result = a.x * b.y - a.y * b.x
 
@@ -225,7 +244,7 @@ func reflect*(incident, normal: Vec2; restitution: float32): Vec2 =
   result = incident - (1f + restitution) * normal * dot(normal, incident)
 
 
-func direction*(a, b: Vec2): Vec2 =
+func direction*(a, b: Vec2): Vec2 {.inline.} =
   result = normalize(b - a)
 
 
@@ -239,7 +258,7 @@ func refract*(incident, normal: Vec2; eta: float32): Vec2 =
 
 # --------------------------------------------------------------------------------------------------
 
-func lerp*(t: float32; a, b: Vec2): Vec2 =
+func lerp*(t: float32; a, b: Vec2): Vec2 {.inline.} =
   result.x = lerp(t, a.x, b.x)
   result.y = lerp(t, a.y, b.y)
 
@@ -265,9 +284,14 @@ func ceil*(a: Vec2): Vec2 {.inline.} =
   result.y = ceil(a.y)
 
 
-func abs*(a: Vec2): Vec2 =
+func abs*(a: Vec2): Vec2 {.inline.} =
   result.x = abs(a.x)
   result.y = abs(a.y)
+
+
+func fast_abs*(a: Vec2): Vec2 {.inline.} =
+  result.x = fast_abs(a.x)
+  result.y = fast_abs(a.y)
 
 # --------------------------------------------------------------------------------------------------
 

@@ -134,8 +134,8 @@ func slerp*(t: float32; a, b: Quat4): Quat4 =
     let sin_sqr = 1f - abs_cosom * abs_cosom
     let sinom = rsqrt(sin_sqr)
     let omega = arctan2(sin_sqr * sinom, abs_cosom)
-    scale0 = sin_poly((1f - t) * omega) * sinom
-    scale1 = sin_poly(t * omega) * sinom
+    scale0 = sin_poly_5((1f - t) * omega) * sinom
+    scale1 = sin_poly_5(t * omega) * sinom
   else:
     scale0 = 1f - t
     scale1 = t

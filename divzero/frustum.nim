@@ -7,7 +7,7 @@ type Frustum* = object
 
 # --------------------------------------------------------------------------------------------------
 
-proc from_matrix*(m: Mat4): Frustum =
+func from_proj_view_matrix*(m: Mat4): Frustum =
   let mx = vec4(m.c0.x, m.c1.x, m.c2.x, m.c3.x)
   let my = vec4(m.c0.y, m.c1.y, m.c2.y, m.c3.y)
   let mz = vec4(m.c0.z, m.c1.z, m.c2.z, m.c3.z)
@@ -22,13 +22,14 @@ proc from_matrix*(m: Mat4): Frustum =
     p.normalize()
 
 
-proc inside*(frustum: Frustum; point: Vec4): bool =
+func inside*(frustum: Frustum; point: Vec4): bool =
   for plane in frustum.p:
     if distance(plane, point) < 0: return false
   return true
 
 
-proc inside*(frustum: Frustum; box: AABB4): bool =
+func inside*(frustum: Frustum; box: AABB3): bool =
+  ## returns true if world space AABB inside frustum
   let p0 = vec4(box.min.x, box.min.y, box.min.z, 1.0f)
   let p1 = vec4(box.max.x, box.min.y, box.min.z, 1.0f)
   let p2 = vec4(box.min.x, box.max.y, box.min.z, 1.0f)

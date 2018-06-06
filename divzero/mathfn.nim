@@ -6,18 +6,18 @@ const
   π* = PI
 
 
-func fract*(x: float32): float32 =
+func fract*(x: float32): float32 {.inline.} =
   ## returns the fractional part of ``x``.
   x - floor(x)
 
 
-func lerp*(t: float32; a, b: float32): float32 =
+func lerp*(t: float32; a, b: float32): float32 {.inline.} =
   ## linearly interpolate between ``a`` and ``b``.
   ## ``t`` must be in [0 .. 1] range
   (1f - t) * a + t * b
 
 
-func smoothstep*(x, edge0, edge1: float32): float32 =
+func smoothstep*(x, edge0, edge1: float32): float32 {.inline.} =
   ## performs Hermite interpolation between two values.
   ## ``edge0`` - lower edge of the Hermite function.
   ## ``edge1`` - higher edge.
@@ -32,7 +32,7 @@ func smootherstep*(x, edge0, edge1: float32): float32 =
   lerp(r, edge0, edge1)
 
 
-func step*(edge, x: float32): float32 =
+func step*(edge, x: float32): float32 {.inline.} =
   if x < edge: 0f else: 1f
 
 
@@ -69,27 +69,27 @@ func fma*(a, b, c: float32): float32 =
    a * b + c
 
 
-func min*(a, b, c: float32): float32 =
+func min*(a, b, c: float32): float32 {.inline.} =
   result = min(a, min(b, c))
 
 
-func max*(a, b, c: float32): float32 =
+func max*(a, b, c: float32): float32 {.inline.} =
   result = max(a, max(b, c))
 
 
-func min*(a, b, c, d: float32): float32 =
+func min*(a, b, c, d: float32): float32 {.inline.} =
   result = min(a, min(b, min(c, d)))
 
 
-func max*(a, b, c, d: float32): float32 =
+func max*(a, b, c, d: float32): float32 {.inline.} =
   result = max(a, max(b, max(c, d)))
 
 
-func rsqrt*(a: float32): float32 =
+func rsqrt*(a: float32): float32 {.inline.} =
   result = 1f / sqrt(a)
 
 
-func sin_poly*(x: float32): float32 =
+func sin_poly_5*(x: float32): float32 =
   const a = -1f / 6f
   const b = +1f / 120f
   const c = -1f / 5040f
@@ -114,6 +114,16 @@ func sin_poly*(x: float32): float32 =
     result = result * z + 1f
     result = result * x
 
+
+func fast_abs*(x: float32): float32 {.inline.} =
+  type FU32 = object {.union.}
+    f: float32
+    u: uint32
+
+  var h: FU32
+  h.f = x
+  h.u = h.u and 0x7fffffffu32
+  result = h.f
 
 # --------------------------------------------------------------------------------------------------
 
