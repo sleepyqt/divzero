@@ -134,6 +134,27 @@ proc ray_cast*(ray: Ray3; plane: Plane; info: out RaycastInfo) =
       info.hit = false
 
 
+proc ray_cast*(ray: Ray3; sphere: Sphere; info: out RaycastInfo) =
+  let d  = normalize(ray.direction)
+  let e  = sphere.position - ray.origin
+  let r2 = sphere.r * sphere.r
+  let e2 = len_sq(e)
+  let a  = dot(e, d)
+  let b2 = e2 - (a * a)
+  let f  = sqrt(abs(r2) - b2)
+  var t  = a - f
+  if r2 - (e2 - a * a) < 0f:
+    info.hit = false
+    return
+  elif e2 < r2:
+    t = a + f
+
+  info.depth  = t
+  info.hit    = true
+  info.point  = ray.origin + d * t
+  info.normal = direction(sphere.position, info.point)
+
+
 proc ray_test*(ray: Ray3; box: AABB3): bool =
   let t1 = (box.min.x - ray.origin.x) / ray.direction.x
   let t2 = (box.max.x - ray.origin.x) / ray.direction.x
