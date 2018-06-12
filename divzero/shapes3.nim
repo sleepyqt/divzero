@@ -1,4 +1,4 @@
-import divzero / [vec4, mat4]
+import divzero / [vec4, mat4, aabb3]
 import std / [math]
 
 # --------------------------------------------------------------------------------------------------
@@ -132,6 +132,18 @@ proc ray_cast*(ray: Ray3; plane: Plane; info: out RaycastInfo) =
       info.depth  = t
     else:
       info.hit = false
+
+
+proc ray_test*(ray: Ray3; box: AABB3): bool =
+  let t1 = (box.min.x - ray.origin.x) / ray.direction.x
+  let t2 = (box.max.x - ray.origin.x) / ray.direction.x
+  let t3 = (box.min.y - ray.origin.y) / ray.direction.y
+  let t4 = (box.max.y - ray.origin.y) / ray.direction.y
+  let t5 = (box.min.z - ray.origin.z) / ray.direction.z
+  let t6 = (box.max.z - ray.origin.z) / ray.direction.z
+  let t7 = max(max(min(t1, t2), min(t3, t4)), min(t5, t6))
+  let t8 = min(min(max(t1, t2), max(t3, t4)), max(t5, t6))
+  (t8 > 0) and (t7 < t8)
 
 
 func screen_ray*(x, y, width, height: float32; inv_pv: Mat4; length: float32): Ray3 =
