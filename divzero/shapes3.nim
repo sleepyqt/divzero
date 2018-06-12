@@ -1,28 +1,118 @@
-import divzero / [vec4, mat4, aabb3]
+import divzero / [vec4, mat4]
 import std / [math]
 
 # --------------------------------------------------------------------------------------------------
 
-type Plane* = object
+type AABB3* = object
+  ## Axis-aligned bounding box
+  min*: Vec4
+  max*: Vec4
+
+type Plane3* = object
   a*, b*, c*, d*: float32
+
+type Sphere* = object
+  x*, y*, z*, r*: float32
+
+type Ray3* = object
+  origin*, direction*: Vec4
+
+type RaycastInfo* = object
+  point*: Vec4
+  normal*: Vec4
+  depth*: float32
+  hit*: bool
+
+type Frustum* = object
+  p*: array[6, Plane3]
+
+# --------------------------------------------------------------------------------------------------
+# AABB3
+# --------------------------------------------------------------------------------------------------
+
+proc aabb3*(): AABB3 =
+  result.min = vec4()
+  result.max = vec4()
+
+
+proc aabb3*(min, max: Vec4): AABB3 =
+  result.min = min
+  result.max = max
+
+
+proc aabb3*(point: Vec4): AABB3 =
+  result.min = point
+  result.max = point
 
 # --------------------------------------------------------------------------------------------------
 
-func plane*(v: Vec4): Plane =
+proc `*`*(b: Mat4; a: AABB3): AABB3 =
+  let
+    xa: Vec4 = b.c0 * a.min.x
+    ya: Vec4 = b.c1 * a.min.y
+    za: Vec4 = b.c2 * a.min.z
+    xb: Vec4 = b.c0 * a.max.x
+    yb: Vec4 = b.c1 * a.max.y
+    zb: Vec4 = b.c2 * a.max.z
+
+  result.min = min(xa, xb) + min(ya, yb) + min(za, zb) + b.c3
+  result.max = max(xa, xb) + max(ya, yb) + max(za, zb) + b.c3
+
+# --------------------------------------------------------------------------------------------------
+
+proc expand*(box: var AABB3; point: Vec4) =
+  box.min = min(box.min, point)
+  box.max = max(box.max, point)
+
+
+proc expand*(box: var AABB3; b: AABB3) =
+  box.min = min(box.min, b.min)
+  box.max = max(box.max, b.max)
+
+# --------------------------------------------------------------------------------------------------
+
+proc size*(box: AABB3): Vec4 =
+  result = box.max - box.min
+
+
+proc center*(box: AABB3): Vec4 =
+  result = (box.min + box.max) * 0.5f
+
+# --------------------------------------------------------------------------------------------------
+
+proc inside*(box: AABB3; point: Vec4): bool =
+  result = point.x >= box.min.x and point.x <= box.max.x and
+           point.y >= box.min.y and point.y <= box.max.y and
+           point.z >= box.min.z and point.z <= box.max.z
+
+
+proc inside*(box: AABB3; b: AABB3): bool =
+  if b.max.x < box.min.x or b.min.x > box.max.x or
+     b.max.y < box.min.y or b.min.y > box.max.y or
+     b.max.z < box.min.z or b.min.z > box.max.z:
+    result = false
+  else:
+    result = true
+
+# --------------------------------------------------------------------------------------------------
+# Plane33
+# --------------------------------------------------------------------------------------------------
+
+func plane3*(v: Vec4): Plane3 =
   result.a = v.x
   result.b = v.y
   result.c = v.z
   result.d = v.w
 
 
-func plane*(normal, point: Vec4): Plane =
+func plane3*(normal, point: Vec4): Plane3 =
   result.a = normal.x
   result.b = normal.y
   result.c = normal.z
   result.d = dot(normal, point)
 
 
-func plane_cw*(a, b, c: Vec4): Plane =
+func plane3_cw*(a, b, c: Vec4): Plane3 =
   let n = normalize(cross(a - c, a - b))
   result.a = n.x
   result.b = n.y
@@ -30,7 +120,7 @@ func plane_cw*(a, b, c: Vec4): Plane =
   result.d = dot(n, a)
 
 
-func plane_ccw*(a, b, c: Vec4): Plane =
+func plane3_ccw*(a, b, c: Vec4): Plane3 =
   let n = normalize(cross(a - b, a - c))
   result.a = n.x
   result.b = n.y
@@ -39,14 +129,14 @@ func plane_ccw*(a, b, c: Vec4): Plane =
 
 # ----------------------------------------------------------------------------------------
 
-func normal*(plane: Plane): Vec4 =
+func normal*(plane: Plane3): Vec4 =
   result.x = plane.a
   result.y = plane.b
   result.z = plane.c
   result.w = 0.0f
 
 
-func normalize*(plane: var Plane) =
+func normalize*(plane: var Plane3) =
   let m = plane.normal.len()
   plane.a = plane.a / m
   plane.b = plane.b / m
@@ -54,14 +144,11 @@ func normalize*(plane: var Plane) =
   plane.d = plane.d / m
 
 
-func distance*(plane: Plane; point: Vec4): float32 =
+func distance*(plane: Plane3; point: Vec4): float32 =
   result = (plane.a * point.x) + (plane.b * point.y) + (plane.c * point.z) + plane.d
 
 # --------------------------------------------------------------------------------------------------
-
-type Sphere* = object
-  x*, y*, z*, r*: float32
-
+# Sphere
 # --------------------------------------------------------------------------------------------------
 
 func sphere*(x, y, z, r: float32): Sphere =
@@ -99,25 +186,15 @@ func overlaps*(a, b: Sphere): bool =
   result = m < (r * r)
 
 # ----------------------------------------------------------------------------------------
-
-type Ray3* = object
-  origin*, direction*: Vec4
-
+# Ray3
 # ----------------------------------------------------------------------------------------
-
-type RaycastInfo* = object
-  point*: Vec4
-  normal*: Vec4
-  depth*: float32
-  hit*: bool
-
 
 func ray3*(origin, direction: Vec4): Ray3 =
   result.origin = origin
   result.direction = direction
 
 
-proc ray_cast*(ray: Ray3; plane: Plane; info: out RaycastInfo) =
+proc ray_cast*(ray: Ray3; plane: Plane3; info: out RaycastInfo) =
   let pn = dot(ray.origin, plane.normal)
   let nd = dot(ray.direction, plane.normal)
 
@@ -177,3 +254,62 @@ func screen_ray*(x, y, width, height: float32; inv_pv: Mat4; length: float32): R
   ray3(clip_n, direction(clip_n, clip_f) * length)
 
 # ----------------------------------------------------------------------------------------
+# Frustum
+# ----------------------------------------------------------------------------------------
+
+func from_proj_view_matrix*(m: Mat4): Frustum =
+  let mx = vec4(m.c0.x, m.c1.x, m.c2.x, m.c3.x)
+  let my = vec4(m.c0.y, m.c1.y, m.c2.y, m.c3.y)
+  let mz = vec4(m.c0.z, m.c1.z, m.c2.z, m.c3.z)
+  let mw = vec4(m.c0.w, m.c1.w, m.c2.w, m.c3.w)
+  result.p[0] = plane3(mw + mx)
+  result.p[1] = plane3(mw - mx)
+  result.p[2] = plane3(mw + my)
+  result.p[3] = plane3(mw - my)
+  result.p[4] = plane3(mw + mz)
+  result.p[5] = plane3(mw - mz)
+  for p in result.p.mitems:
+    p.normalize()
+
+
+func inside*(frustum: Frustum; point: Vec4): bool =
+  for plane in frustum.p:
+    if distance(plane, point) < 0: return false
+  return true
+
+
+func inside*(frustum: Frustum; box: AABB3): bool =
+  ## returns true if world space AABB inside frustum
+  let p0 = vec4(box.min.x, box.min.y, box.min.z, 1.0f)
+  let p1 = vec4(box.max.x, box.min.y, box.min.z, 1.0f)
+  let p2 = vec4(box.min.x, box.max.y, box.min.z, 1.0f)
+  let p3 = vec4(box.max.x, box.max.y, box.min.z, 1.0f)
+
+  let p4 = vec4(box.min.x, box.min.y, box.max.z, 1.0f)
+  let p5 = vec4(box.max.x, box.min.y, box.max.z, 1.0f)
+  let p6 = vec4(box.min.x, box.max.y, box.max.z, 1.0f)
+  let p7 = vec4(box.max.x, box.max.y, box.max.z, 1.0f)
+
+  for plane in frustum.p:
+    let d0 = distance(plane, p0)
+    let d1 = distance(plane, p1)
+    let d2 = distance(plane, p2)
+    let d3 = distance(plane, p3)
+
+    let d4 = distance(plane, p4)
+    let d5 = distance(plane, p5)
+    let d6 = distance(plane, p6)
+    let d7 = distance(plane, p7)
+
+    let x0 = d0 < 0
+    let x1 = d1 < 0
+    let x2 = d2 < 0
+    let x3 = d3 < 0
+
+    let x4 = d4 < 0
+    let x5 = d5 < 0
+    let x6 = d6 < 0
+    let x7 = d7 < 0
+
+    if x0 and x1 and x2 and x3 and x4 and x5 and x6 and x7: return false
+  result = true
