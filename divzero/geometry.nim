@@ -42,6 +42,7 @@ type Geometry* = object
   bounds*: AABB3
   surfaces*: array[MAX_GEOMETRY_SURFACES, GeoSurface]
   format*: GeoFormat
+  num_bones*: int
 
 # --------------------------------------------------------------------------------------------------
 

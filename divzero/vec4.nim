@@ -280,13 +280,20 @@ func round*(a: Vec4): Vec4 =
 
 # --------------------------------------------------------------------------------------------------
 
-func to_cartesian*(a: Vec4): Vec4 =
+func to_cartesian_point*(a: Vec4): Vec4 =
   ## converts homogeneous vector to cartesian vector
-  assert(a.w != 0.0f)
   result.x = a.x / a.w
   result.y = a.y / a.w
   result.z = a.z / a.w
-  result.w = 0.0f
+  result.w = 1f
+
+
+func to_cartesian_direction*(a: Vec4): Vec4 =
+  ## converts homogeneous vector to cartesian vector
+  result.x = a.x / a.w
+  result.y = a.y / a.w
+  result.z = a.z / a.w
+  result.w = 0f
 
 # --------------------------------------------------------------------------------------------------
 

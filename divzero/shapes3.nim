@@ -1,4 +1,5 @@
-import divzero / [vec4]
+import divzero / [vec4, mat4]
+import std / [math]
 
 # --------------------------------------------------------------------------------------------------
 
@@ -7,21 +8,21 @@ type Plane* = object
 
 # --------------------------------------------------------------------------------------------------
 
-proc plane*(v: Vec4): Plane =
+func plane*(v: Vec4): Plane =
   result.a = v.x
   result.b = v.y
   result.c = v.z
   result.d = v.w
 
 
-proc plane*(normal, point: Vec4): Plane =
+func plane*(normal, point: Vec4): Plane =
   result.a = normal.x
   result.b = normal.y
   result.c = normal.z
   result.d = dot(normal, point)
 
 
-proc plane_cw*(a, b, c: Vec4): Plane =
+func plane_cw*(a, b, c: Vec4): Plane =
   let n = normalize(cross(a - c, a - b))
   result.a = n.x
   result.b = n.y
@@ -29,7 +30,7 @@ proc plane_cw*(a, b, c: Vec4): Plane =
   result.d = dot(n, a)
 
 
-proc plane_ccw*(a, b, c: Vec4): Plane =
+func plane_ccw*(a, b, c: Vec4): Plane =
   let n = normalize(cross(a - b, a - c))
   result.a = n.x
   result.b = n.y
@@ -38,14 +39,14 @@ proc plane_ccw*(a, b, c: Vec4): Plane =
 
 # ----------------------------------------------------------------------------------------
 
-proc normal*(plane: Plane): Vec4 =
+func normal*(plane: Plane): Vec4 =
   result.x = plane.a
   result.y = plane.b
   result.z = plane.c
-  result.w = 0.0
+  result.w = 0.0f
 
 
-proc normalize*(plane: var Plane) =
+func normalize*(plane: var Plane) =
   let m = plane.normal.len()
   plane.a = plane.a / m
   plane.b = plane.b / m
@@ -53,8 +54,8 @@ proc normalize*(plane: var Plane) =
   plane.d = plane.d / m
 
 
-proc distance*(plane: Plane; point: Vec4): float32 =
-  result = plane.a * point.x + plane.b * point.y + plane.c * point.z + plane.d
+func distance*(plane: Plane; point: Vec4): float32 =
+  result = (plane.a * point.x) + (plane.b * point.y) + (plane.c * point.z) + plane.d
 
 # --------------------------------------------------------------------------------------------------
 
@@ -63,19 +64,25 @@ type Sphere* = object
 
 # --------------------------------------------------------------------------------------------------
 
-proc sphere*(x, y, z, r: float32): Sphere =
+func sphere*(x, y, z, r: float32): Sphere =
   result = Sphere(x: x, y: y, z: z, r: r)
 
 
-proc sphere*(point: Vec4; radius: float32): Sphere =
+func sphere*(point: Vec4; radius: float32): Sphere =
   result.x = point.x
   result.y = point.y
   result.z = point.z
   result.r = radius
 
-# --------------------------------------------------------------------------------------------------
 
-proc inside*(sphere: Sphere; point: Vec4): bool =
+func position*(sphere: Sphere): Vec4 =
+  result.x = sphere.x
+  result.y = sphere.y
+  result.z = sphere.z
+  result.w = 1f
+
+
+func inside*(sphere: Sphere; point: Vec4): bool =
   let x = point.x - sphere.x
   let y = point.y - sphere.y
   let z = point.z - sphere.z
@@ -83,7 +90,7 @@ proc inside*(sphere: Sphere; point: Vec4): bool =
   result = m < (sphere.r * sphere.r)
 
 
-proc intersect*(a, b: Sphere): bool =
+func overlaps*(a, b: Sphere): bool =
   let r = a.r + b.r
   let x = a.x - b.x
   let y = a.y - b.y
@@ -98,7 +105,42 @@ type Ray3* = object
 
 # ----------------------------------------------------------------------------------------
 
-proc ray3*(origin, direction: Vec4): Ray3 =
+type RaycastInfo* = object
+  point*: Vec4
+  normal*: Vec4
+  depth*: float32
+  hit*: bool
+
+
+func ray3*(origin, direction: Vec4): Ray3 =
   result.origin = origin
   result.direction = direction
 
+
+proc ray_cast*(ray: Ray3; plane: Plane; info: out RaycastInfo) =
+  let pn = dot(ray.origin, plane.normal)
+  let nd = dot(ray.direction, plane.normal)
+
+  if nd >= 0f:
+    info.hit = false
+  else:
+    let t = (plane.d - pn) / nd
+    if t >= 0f:
+      info.hit = true
+      info.point  = ray.origin + ray.direction * t
+      info.normal = plane.normal
+      info.depth  = t
+    else:
+      info.hit = false
+
+
+func screen_ray*(x, y, width, height: float32; inv_pv: Mat4; length: float32): Ray3 =
+  ## `x`, `y` - point on screen
+  ## `width`, `height` - screen size
+  ## `length` - ray length
+  ## `inv_pv` - clip-to-world matrix
+  let clip_n = to_cartesian_point(inv_pv * window_to_near_clip(x, y, width, height))
+  let clip_f = to_cartesian_point(inv_pv * window_to_far_clip(x, y, width, height))
+  ray3(clip_n, direction(clip_n, clip_f) * length)
+
+# ----------------------------------------------------------------------------------------

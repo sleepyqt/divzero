@@ -73,11 +73,35 @@ func mat4_t*(a: Vec4): Mat4 =
   result.c3 = Vec4(x: a.x,  y: a.y,  z: a.z,  w: 1.0f)
 
 
+func mat4_t*(x, y, z: float32): Mat4 =
+  ## creates new translation matrix
+  result.c0 = Vec4(x: 1.0f, y: 0.0f, z: 0.0f, w: 0.0f)
+  result.c1 = Vec4(x: 0.0f, y: 1.0f, z: 0.0f, w: 0.0f)
+  result.c2 = Vec4(x: 0.0f, y: 0.0f, z: 1.0f, w: 0.0f)
+  result.c3 = Vec4(x: x,    y: y,    z: z,    w: 1.0f)
+
+
 func mat4_s*(a: Vec4): Mat4 =
   ## creates new scale matrix
   result.c0 = Vec4(x: a.x,  y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: a.y,  z: 0.0f, w: 0.0f)
   result.c2 = Vec4(x: 0.0f, y: 0.0f, z: a.z,  w: 0.0f)
+  result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
+
+
+func mat4_s*(x, y, z: float32): Mat4 =
+  ## creates new scale matrix
+  result.c0 = Vec4(x: x,    y: 0.0f, z: 0.0f, w: 0.0f)
+  result.c1 = Vec4(x: 0.0f, y: y,    z: 0.0f, w: 0.0f)
+  result.c2 = Vec4(x: 0.0f, y: 0.0f, z: z,    w: 0.0f)
+  result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
+
+
+func mat4_s*(s: float32): Mat4 =
+  ## creates new scale matrix
+  result.c0 = Vec4(x: s,    y: 0.0f, z: 0.0f, w: 0.0f)
+  result.c1 = Vec4(x: 0.0f, y: s,    z: 0.0f, w: 0.0f)
+  result.c2 = Vec4(x: 0.0f, y: 0.0f, z: s,    w: 0.0f)
   result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
 
 
@@ -273,45 +297,20 @@ func normalize_zaxis*(m: Mat4): Mat4 =
 
 # --------------------------------------------------------------------------------------------------
 
-func world_to_window*(obj: Vec4; view, proj: Mat4; viewport: Vec4): Vec4 =
-  var i = proj * view * obj
-
-  i.x /= i.w
-  i.y /= i.w
-  i.z /= i.w
-
-  i.x = i.x * 0.5f + 0.5f
-  i.y = i.y * 0.5f + 0.5f
-  i.z = i.z * 0.5f + 0.5f
-
-  i.x = i.x * viewport.z + viewport.x
-  i.y = i.y * viewport.w + viewport.y
-
-  result.x = i.x
-  result.y = i.y
-  result.z = i.z
-  result.w = 1.0f
+func window_to_near_clip*(x, y, width, height: float32): Vec4 =
+  ## transforms point on near clip plane to clip space
+  result.x = (2f * x) / width - 1f
+  result.y = 1f - (2f * y) / height
+  result.z = -1f
+  result.w = 1f
 
 
-func window_to_world*(win: Vec4; inv_vp: Mat4; viewport: Vec4): Vec4 =
-  var i = win
-
-  i.x = (i.x - viewport.x) / viewport.z
-  i.y = (i.y - viewport.y) / viewport.w
-
-  i.x = i.x * 2f - 1f
-  i.y = i.y * 2f - 1f
-  i.z = i.z * 2f - 1f
-
-  var o = inv_vp * i
-
-  o.x /= o.w
-  o.y /= o.w
-  o.z /= o.w
-
-  result.x = o.x
-  result.y = o.y
-  result.z = o.z
+func window_to_far_clip*(x, y, width, height: float32): Vec4 =
+  ## transforms point on far clip plane to clip space
+  result.x = (2f * x) / width - 1f
+  result.y = 1f - (2f * y) / height
+  result.z = 0f
+  result.w = 1f
 
 # --------------------------------------------------------------------------------------------------
 
