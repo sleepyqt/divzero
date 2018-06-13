@@ -1,5 +1,6 @@
 import std     / [math]
 import divzero / [mathfn, vec4, mat4]
+
 # --------------------------------------------------------------------------------------------------
 
 type Quat* = object
@@ -83,6 +84,27 @@ func `*`*(a, b: Quat): Quat =
   result.w = a.w * b.w - d
 
 
+func `*`*(a: Quat; s: float32): Quat =
+  result.x = a.x * s
+  result.y = a.y * s
+  result.z = a.z * s
+  result.w = a.w * s
+
+
+func `+`*(a, b: Quat): Quat =
+  result.x = a.x + b.x
+  result.y = a.y + b.y
+  result.z = a.z + b.z
+  result.w = a.w + b.w
+
+
+func `-`*(a, b: Quat): Quat =
+  result.x = a.x - b.x
+  result.y = a.y - b.y
+  result.z = a.z - b.z
+  result.w = a.w - b.w
+
+
 func to_matrix*(a: Quat): Mat4 =
   let xx = a.x * a.x
   let xy = a.x * a.y
@@ -147,12 +169,127 @@ func slerp*(t: float32; a, b: Quat): Quat =
 
 # --------------------------------------------------------------------------------------------------
 
+type DualQuat* = object
+  real*: Quat
+  dual*: Quat
+
+# --------------------------------------------------------------------------------------------------
+
+func dual_quat*(): DualQuat =
+  result.real = quat(0f, 0f, 0f, 1f)
+  result.dual = quat(0f, 0f, 0f, 0f)
+
+
+func dual_quat*(real, dual: Quat): DualQuat =
+  result.real = normalize(real)
+  result.dual = dual
+
+
+func dual_quat*(rotation: Quat; t: Vec4): DualQuat =
+  result.real = normalize(rotation)
+  result.dual = quat(t.x, t.y, t.z, 0f) * result.real * 0.5f
+
+
+func dot*(a, b: DualQuat): float32 =
+  result = dot(a.real, b.real)
+
+
+func `*`*(a: DualQuat; s: float32): DualQuat =
+  result.real = a.real * s
+  result.dual = a.dual * s
+
+
+func normalize*(a: DualQuat): DualQuat =
+  let mag = dot(a.real, a.real)
+  result.real = a.real * (1f / mag)
+  result.dual = a.dual * (1f / mag)
+
+
+func `+`*(a, b: DualQuat): DualQuat =
+  result.real = a.real + b.real
+  result.dual = a.dual + b.dual
+
+
+func `*`*(a, b: DualQuat): DualQuat =
+  result.real = a.real * b.real
+  result.dual = a.dual * b.real + a.real * b.dual
+
+func conjugate*(a: DualQuat): DualQuat =
+  result.real = conjugate(a.real)
+  result.dual = conjugate(a.dual)
+
+
+func rotation*(a: DualQuat): Quat =
+  result = a.real
+
+
+func translation*(a: DualQuat): Vec4 =
+  let t = (a.dual * 2f) * conjugate(a.real)
+  result.x = t.x
+  result.y = t.y
+  result.z = t.z
+  result.w = 1f
+
+
+func to_matrix*(a: DualQuat): Mat4 =
+  let q = normalize(a)
+  let w = q.real.w
+  let x = q.real.x
+  let y = q.real.y
+  let z = q.real.z
+  result.c0.x = (w * w) + (x * x) - (y * y) - (z * z)
+  result.c0.y = (2f * x * y) + (2f * w * z)
+  result.c0.z = (2f * x * z) - (2f * w * y)
+  result.c0.w = 0f
+
+  result.c1.x = (2f * x * y) - (2f * w * z)
+  result.c1.y = (w * w) + (y * y) - (x * x) - (z * z)
+  result.c1.z = (2f * y * z) + (2f * w * x)
+  result.c1.w = 0f
+
+  result.c2.x = (2f * x * z) + (2f * w * y)
+  result.c2.y = (2f * y * z) - (2f * w * x)
+  result.c2.z = (w * w) + (z * z) - (x * x) - (y * y)
+  result.c2.w = 0f
+
+  let t = (q.dual * 2f) * conjugate(q.real)
+  result.c3.x = t.x
+  result.c3.y = t.y
+  result.c3.z = t.z
+  result.c3.w = 1f
+
+# --------------------------------------------------------------------------------------------------
+
 proc selftest* =
-  let u0 = quat()
-  let u1 = quat()
-  do_assert(u0 * u1 == quat())
-  do_assert(len(u0) == 1f)
-  do_assert(len(u1) == 1f)
-  let q1 = quat(2, 3, 4, 1)
-  let q2 = quat(6, 7, 8, 5)
-  do_assert(q1 * q2 == quat(12.0, 30.0, 24.0, -60.0))
+  block:
+    let u0 = quat()
+    let u1 = quat()
+    do_assert(u0 * u1 == quat())
+    do_assert(len(u0) == 1f)
+    do_assert(len(u1) == 1f)
+    let q1 = quat(2, 3, 4, 1)
+    let q2 = quat(6, 7, 8, 5)
+    do_assert(q1 * q2 == quat(12.0, 30.0, 24.0, -60.0))
+
+  block:
+    let q1 = dual_quat()
+    let q2 = dual_quat()
+    echo q1
+    echo q2
+    echo q1 * q2
+    #do_assert(q1 * q2 == dual_quat())
+
+    let q3 = dual_quat(quat(), vec4(1, 2, 3, 1))
+    echo "q3"
+    echo q3.to_matrix.pretty
+    let q4 = dual_quat(quat(vec4(0, 1, 0, 0), 1.23f), vec4())
+    echo "q4"
+    echo q4.to_matrix.pretty
+    let q5 = dual_quat(quat(vec4(0, 1, 0, 0), 1.23f), vec4(1, 2, 3, 1))
+    echo "q5"
+    echo q5.to_matrix.pretty
+    let q6 = dual_quat(quat(), vec4(3, 2, 1, 1))
+    echo "q6"
+    echo q6.to_matrix.pretty
+    echo "q3 * q6"
+    echo (q3 * q6).to_matrix.pretty
