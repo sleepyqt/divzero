@@ -33,6 +33,27 @@ func quat*(x, y, z, w: float32): Quat =
   result.z = z
   result.w = w
 
+
+func quat_rx*(angle: float32): Quat =
+  result.x = sin(angle * 0.5f)
+  result.y = 0f
+  result.z = 0f
+  result.w = cos(angle * 0.5f)
+
+
+func quat_ry*(angle: float32): Quat =
+  result.x = 0f
+  result.y = sin(angle * 0.5f)
+  result.z = 0f
+  result.w = cos(angle * 0.5f)
+
+
+func quat_rz*(angle: float32): Quat =
+  result.x = 0f
+  result.y = 0f
+  result.z = sin(angle * 0.5f)
+  result.w = cos(angle * 0.5f)
+
 # --------------------------------------------------------------------------------------------------
 
 func len_sq*(quat: Quat): float32 =
@@ -135,6 +156,33 @@ func to_matrix*(a: Quat): Mat4 =
   result.c3 = vec4(0f, 0f, 0f, 1f)
 
 
+func to_axis_and_angle*(q: Quat): (Vec4, float32) =
+  let ca = q.w
+  var sa = sqrt(1f - ca * ca)
+  if abs(sa) < 0.0005f: sa = 1f
+  result[0].x = q.x / sa
+  result[0].y = q.y / sa
+  result[0].z = q.z / sa
+  result[0].w = 0f
+  result[1]   = 2f * arccos(ca)
+
+
+func rotate_vector*(q: Quat; v: Vec4): Vec4 =
+  let vt = q * quat(v.x, v.y, v.z, 0f) * conjugate(q)
+  result.x = vt.x
+  result.y = vt.y
+  result.z = vt.z
+  result.w = 0f
+
+
+func rotate_point*(q: Quat; v: Vec4): Vec4 =
+  let vt = q * quat(v.x, v.y, v.z, 0f) * conjugate(q)
+  result.x = vt.x
+  result.y = vt.y
+  result.z = vt.z
+  result.w = 1f
+
+
 func lerp*(t: float32; a, b: Quat): Quat =
   let s = 1f - t
   result.x = s * a.x + t * b.x
@@ -190,6 +238,31 @@ func dual_quat*(rotation: Quat; t: Vec4): DualQuat =
   result.dual = quat(t.x, t.y, t.z, 0f) * result.real * 0.5f
 
 
+func dual_quat_t*(t: Vec4): DualQuat =
+  result.real = quat()
+  result.dual = quat(t.x, t.y, t.z, 0f) * result.real * 0.5f
+
+
+func dual_quat_t*(x, y, z: float32): DualQuat =
+  result.real = quat()
+  result.dual = quat(x, y, z, 0f) * result.real * 0.5f
+
+
+func dual_quat_rx*(angle: float32): DualQuat =
+  result.real = quat_rx(angle)
+  result.dual = quat(0f, 0f, 0f, 0f)
+
+
+func dual_quat_ry*(angle: float32): DualQuat =
+  result.real = quat_ry(angle)
+  result.dual = quat(0f, 0f, 0f, 0f)
+
+
+func dual_quat_rz*(angle: float32): DualQuat =
+  result.real = quat_rz(angle)
+  result.dual = quat(0f, 0f, 0f, 0f)
+
+
 func dot*(a, b: DualQuat): float32 =
   result = dot(a.real, b.real)
 
@@ -212,7 +285,8 @@ func `+`*(a, b: DualQuat): DualQuat =
 
 func `*`*(a, b: DualQuat): DualQuat =
   result.real = a.real * b.real
-  result.dual = a.dual * b.real + a.real * b.dual
+  result.dual = a.real * b.dual + a.dual * b.real
+
 
 func conjugate*(a: DualQuat): DualQuat =
   result.real = conjugate(a.real)
@@ -257,6 +331,19 @@ func to_matrix*(a: DualQuat): Mat4 =
   result.c3.y = t.y
   result.c3.z = t.z
   result.c3.w = 1f
+
+
+func rotate_vector*(q: DualQuat; v: Vec4): Vec4 =
+  result = q.real.rotate_vector(v)
+
+
+func transform*(q: DualQuat; p: Vec4): Vec4 =
+  result = q.real.rotate_vector(p) + q.translation
+
+
+func lerp*(t: float32; a, b: DualQuat): DualQuat =
+  result.real = t.lerp(a.real, b.real)
+  result.dual = t.lerp(a.dual, b.dual)
 
 # --------------------------------------------------------------------------------------------------
 

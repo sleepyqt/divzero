@@ -140,11 +140,6 @@ func mat4_rxyz*(a: Vec4): Mat4 =
 
 # --------------------------------------------------------------------------------------------------
 
-func translate*(m: Mat4; x, y, z: float32): Mat4 =
-  result = m * mat4_t(vec4(x, y, z, 1.0f))
-
-# --------------------------------------------------------------------------------------------------
-
 func view_look_at*(eye, target, up: Vec4): Mat4 =
   ## creates viewing matrix for camera
   ## `eye` - camera position

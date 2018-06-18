@@ -53,7 +53,7 @@ func expand_bits*(v: uint32): uint32 =
   result = v
 
 
-func morton_3d(x, y, z: float32): uint32 =
+func morton_3d*(x, y, z: float32): uint32 =
   ## Calculates a 30-bit Morton code for the
   ## given 3D point located within the unit cube [0,1]
   let x = min(max(x * 1024f, 0f), 1023f)
