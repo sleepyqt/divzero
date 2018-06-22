@@ -32,7 +32,7 @@ func color*(gray: float32): Color {.inline.} =
   result.a = 1f
 
 
-func rgba8*(r, g, b, a: uint8): Color {.inline.} =
+func color*(r, g, b, a: uint8): Color {.inline.} =
   result.r = float32(r) / 255.0f
   result.g = float32(g) / 255.0f
   result.b = float32(b) / 255.0f
@@ -55,12 +55,8 @@ proc negative*(c: Color): Color =
   result.a = c.a
 
 
-proc gray*(c: Color): Color =
-  let g: float32 = (c.r + c.g + c.b) / 3.0f
-  result.r = g
-  result.g = g
-  result.b = g
-  result.a = c.a
+proc gray*(c: Color): float32 =
+  (c.r + c.g + c.b) / 3.0f
 
 
 proc alpha*(c: Color; v: float32): Color =
@@ -198,17 +194,20 @@ proc decode_rgba_8888*(color: uint32): Color =
   result.a = float32(a) * inv
 
 
-proc encode_gray_8*(color: Color): uint8 =
-  let g: uint8 = uint8(color.gray.r * 255f)
-  result = g
+proc encode_gray_8*(color: float32): uint8 =
+  uint8(color * 255f)
 
 
-proc decode_gray_8*(color: uint8): Color =
-  let g: float32 = float32(color) / 255f
-  result.r = g
-  result.g = g
-  result.b = g
-  result.a = 1f
+proc decode_gray_8*(color: uint8): float32 =
+  float32(color) / 255f
+
+
+proc encode_gray_16*(color: float32): uint16 =
+  uint16(color * 65535f)
+
+
+proc decode_gray_16*(color: uint16): float32 =
+  float32(color) / 65535f
 
 # --------------------------------------------------------------------------------------------------
 

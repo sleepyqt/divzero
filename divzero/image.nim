@@ -2,223 +2,297 @@ import divzero / [color]
 
 # --------------------------------------------------------------------------------------------------
 
-type ImageFormat* = enum
-  IF_NONE = 0
-  IF_GRAY_8 = 1
-  IF_ABGR_8888 = 2
-  IF_BGR_888 = 3
-  IF_SABGR_8888 = 4
-  IF_SBGR_888 = 5
-  IF_GRAY_16 = 6
+type ImageFormat* {.pure.} = enum
+  gray_8
+  abgr_8888
+  bgr_888
+  sabgr_8888
+  sbgr_888
+  gray_16
 
-const format_stride = [
-  0, # IF_NONE
-  1, # IF_GRAY_8
-  4, # IF_ABGR_8888
-  3, # IF_BGR_888
-  4, # IF_SABGR_8888
-  3, # IF_SBGR_888
-  2, # IF_GRAY_16
+const format_stride* = [
+  1, # gray_8
+  4, # abgr_8888
+  3, # bgr_888
+  4, # sabgr_8888
+  3, # sbgr_888
+  2, # gray_16
 ]
-
-type ImageFlags* {.pure.} = enum
-  Filter, GenMipmaps
 
 # --------------------------------------------------------------------------------------------------
 
-const ROW_ALIGNMENT = 4
+const row_alignment = 4
 
-type MipOffset* = int32
-
-type MipChain* = array[16, MipOffset] ## offsets into image.data
-
-type Image* = object
+type Image2d* = object
+  format*: ImageFormat
   width*, height*: int32      ## dimensions in pixels
   stride*: int32              ## size in bytes of single pixel
   pitch*: int32               ## size in bytes of single row of pixels, including padding
   size*: int32                ## size of image data in bytes
-  format*: ImageFormat
-  flags*: set[ImageFlags]
   data*: pointer              ## pointer to memory containing pixel data
 
-# --------------------------------------------------------------------------------------------------
 
-proc stride*(format: ImageFormat): int32 = int32(format_stride[ord format])
-
-proc roundup(x, v: int32): int32 {.inline.} = (x + (v - 1)) and not (v - 1)
+type MipChain* = array[16, int] ## offsets into Image2d.data
 
 # --------------------------------------------------------------------------------------------------
 
-proc create_image*(width, height: int32; format: ImageFormat; flags: set[ImageFlags]): Image =
-  result.width   = width
-  result.height  = height
-  result.stride  = stride(format)
-  result.format  = format
-  result.flags   = flags
-  result.pitch   = roundup((result.width * result.stride), ROW_ALIGNMENT)
-  result.size    = result.pitch * result.height
-  result.data    = alloc(result.size)
+template roundup(x, v: int32): int32 = (x + (v - 1)) and not (v - 1)
+
+# --------------------------------------------------------------------------------------------------
+
+proc init_image*(width, height: int32; format: ImageFormat; data: pointer): Image2d =
+  assert(width > 0 and height > 0)
+  result.width  = width
+  result.height = height
+  result.stride = int32 format_stride[ord format]
+  result.format = format
+  result.pitch  = roundup((result.width * result.stride), row_alignment)
+  result.size   = result.pitch * result.height
+  result.data   = data
 
 
-proc create_image*(width, height: int32; format: ImageFormat; flags: set[ImageFlags]; data: pointer): Image =
-  result.width   = width
-  result.height  = height
-  result.stride  = stride(format)
-  result.format  = format
-  result.flags   = flags
-  result.pitch   = roundup((result.width * result.stride), ROW_ALIGNMENT)
-  result.size    = result.pitch * result.height
-  result.data    = data
+proc init_image*(width, height: int32; format: ImageFormat): Image2d =
+  result = init_image(width, height, format, nil)
+  result.data = alloc(result.size)
 
 
-proc destroy*(image: var Image) =
+proc destroy*(image: var Image2d) =
   assert(image.data != nil)
   image.data.dealloc()
 
 # --------------------------------------------------------------------------------------------------
 
-iterator bytes*(image: Image): uint8 =
-  for i in 0 ..< image.size:
-    let a = cast[pointer](cast[int](image.data) + i)
-    yield cast[ptr uint8](a)[]
+proc in_bounds*(image: Image2d; x, y: int32): bool =
+  (x >= 0) and (y >= 0) and (x < image.width) and (y < image.height)
 
 
-iterator mbytes*(image: var Image): ptr uint8 =
-  for i in 0 ..< image.size:
-    yield cast[ptr uint8](cast[int](image.data) + i * 1)
-
-
-iterator words*(image: Image): uint16 =
-  for i in 0 ..< (image.size div 2):
-    let a = cast[pointer](cast[int](image.data) + i * 2)
-    yield cast[ptr uint16](a)[]
-
-
-iterator mwords*(image: var Image): ptr uint16 =
-  for i in 0 ..< (image.size div 2):
-    yield cast[ptr uint16](cast[int](image.data) + i * 2)
-
-
-iterator dwords*(image: Image): uint32 =
-  for i in 0 ..< (image.size div 4):
-    let a = cast[pointer](cast[int](image.data) + i * 4)
-    yield cast[ptr uint32](a)[]
-
-
-iterator mdwords*(image: var Image): ptr uint32 =
-  for i in 0 ..< (image.size div 4):
-    yield cast[ptr uint32](cast[int](image.data) + i * 4)
+proc row*(image: Image2d; y: int; T: typedesc): ptr UncheckedArray[T] =
+  cast[ptr UncheckedArray[T]](cast[int](image.data) + y * image.pitch)
 
 # --------------------------------------------------------------------------------------------------
 
-template sample2d(data: pointer; pitch, stride, x, y: int32): int =
-  cast[int](data) + ((x * stride) + y * pitch)
-
-# --------------------------------------------------------------------------------------------------
-
-proc in_bounds*(image: Image; x, y: int32): bool =
-  if x < 0: return
-  if y < 0: return
-  if x >= image.width: return
-  if y >= image.height: return
-  result = true
-
-# --------------------------------------------------------------------------------------------------
-
-proc set_pixel_abgr_8888*(image: var Image; x, y: int32; color: Color) =
-  let i = sample2d(image.data, image.pitch, 4, x, y)
-  cast[ptr uint32](i)[] = encode_abgr_8888(color)
-
-
-proc set_pixel_sabgr_8888*(image: var Image; x, y: int32; color: Color) =
-  set_pixel_abgr_8888(image, x, y, color.to_srgb)
-
-
-proc set_pixel_gray_8*(image: var Image; x, y: int32; color: Color) =
-  let i = sample2d(image.data, image.pitch, 1, x, y)
-  cast[ptr uint8](i)[] = encode_gray_8(color)
-
-
-proc set_pixel_gray_16*(image: var Image; x, y: int32; color: uint16) =
-  let i = sample2d(image.data, image.pitch, 2, x, y)
-  cast[ptr uint16](i)[] = color
-
-
-proc set_pixel*(image: var Image; x, y: int32; color: Color) =
-  assert(image.data != nil)
+proc set_pixel_gray_8*(image: var Image2d; x, y: int32; color: uint8) =
   assert(in_bounds(image, x, y))
-  case image.format:
-  of IF_ABGR_8888:  set_pixel_abgr_8888(image, x, y, color)
-  of IF_SABGR_8888: set_pixel_sabgr_8888(image, x, y, color)
-  of IF_GRAY_8:     set_pixel_gray_8(image, x, y, color)
-  else:             assert(false, "set_pixel: Unsupported image format")
-
-# --------------------------------------------------------------------------------------------------
-
-proc get_pixel*(image: Image; x, y: int32): Color =
-  assert(image.data != nil)
-  assert(in_bounds(image, x, y), $x & "x" & $y)
-  let i = sample2d(image.data, image.pitch, image.stride, x, y)
-  case image.format:
-  of IF_ABGR_8888:
-    result = decode_abgr_8888(cast[ptr uint32](i)[])
-  of IF_SABGR_8888:
-    result = decode_abgr_8888(cast[ptr uint32](i)[]).to_linear
-  of IF_GRAY_8:
-    result = decode_gray_8(cast[ptr uint8](i)[])
-  else:
-    assert(false, "get_pixel: Unsupported image format")
+  image.row(y, uint8)[x] = color
 
 
-proc resize*(image: var Image; w, h: int32) =
-  assert(w > 0)
-  assert(h > 0)
-  assert(image.format != IF_NONE)
-  image.width  = w
-  image.height = h
-  image.pitch  = roundup((image.width * image.stride), ROW_ALIGNMENT)
-  image.size   = image.pitch * image.height
-  image.data   = realloc(image.data, image.size)
+proc get_pixel_gray_8*(image: Image2d; x, y: int32): uint8 =
+  assert(in_bounds(image, x, y))
+  image.row(y, uint8)[x]
 
-# --------------------------------------------------------------------------------------------------
 
-iterator pixels*(image: Image): (int32, int32, Color) =
+iterator xy_pixels_gray_8*(image: Image2d): (int32, int32, uint8) =
   for y in 0i32 ..< image.height:
     for x in 0i32 ..< image.width:
-      yield (x, y, get_pixel(image, x, y))
+      yield (x, y, image.row(y, uint8)[x])
+
+
+iterator xy_mpixels_gray_8*(image: var Image2d): (int32, int32, var uint8) =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield (x, y, image.row(y, uint8)[x])
+
+
+iterator pixels_gray_8*(image: Image2d): uint8 =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield image.row(y, uint8)[x]
+
+
+iterator mpixels_gray_8*(image: var Image2d): var uint8 =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield image.row(y, uint8)[x]
+
+
+proc clear_gray_8*(image: var Image2d; color: uint8) =
+  for p in mpixels_gray_8(image):
+    p = color
 
 # --------------------------------------------------------------------------------------------------
 
-proc premultiply*(image: var Image) =
-  #echo "premultiply"
-  for x, y, color in image.pixels:
-    let pa = color.premultiply
-    #echo "s ", color, " => ", pa
-    image.set_pixel(x, y, pa)
+proc set_pixel_gray_16*(image: var Image2d; x, y: int32; color: uint16) =
+  assert(in_bounds(image, x, y))
+  image.row(y, uint16)[x] = color
+
+
+proc get_pixel_gray_16*(image: Image2d; x, y: int32): uint16 =
+  assert(in_bounds(image, x, y))
+  image.row(y, uint16)[x]
+
+
+iterator xy_pixels_gray_16*(image: Image2d): (int32, int32, uint16) =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield (x, y, image.row(y, uint16)[x])
+
+
+iterator xy_mpixels_gray_16*(image: var Image2d): (int32, int32, var uint16) =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield (x, y, image.row(y, uint16)[x])
+
+
+iterator pixels_gray_16*(image: Image2d): uint16 =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield image.row(y, uint16)[x]
+
+
+iterator mpixels_gray_16*(image: var Image2d): var uint16 =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield image.row(y, uint16)[x]
+
+
+proc clear_gray_16*(image: var Image2d; color: uint16) =
+  for p in mpixels_gray_16(image):
+    p = color
 
 # --------------------------------------------------------------------------------------------------
 
-proc clear*(image: var Image; color: Color) =
-  assert(image.data != nil)
+proc set_pixel_abgr_8888*(image: var Image2d; x, y: int32; color: uint32) =
+  assert(in_bounds(image, x, y))
+  image.row(y, uint32)[x] = color
+
+
+proc get_pixel_abgr_8888*(image: Image2d; x, y: int32): uint32 =
+  assert(in_bounds(image, x, y))
+  image.row(y, uint32)[x]
+
+
+iterator xy_pixels_abgr_8888*(image: Image2d): (int32, int32, uint32) =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield (x, y, image.row(y, uint32)[x])
+
+
+iterator xy_mpixels_abgr_8888*(image: var Image2d): (int32, int32, var uint32) =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield (x, y, image.row(y, uint32)[x])
+
+
+iterator pixels_abgr_8888*(image: Image2d): uint32 =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield image.row(y, uint32)[x]
+
+
+iterator mpixels_abgr_8888*(image: var Image2d): var uint32 =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield image.row(y, uint32)[x]
+
+
+proc clear_abgr_8888*(image: var Image2d; color: uint32) =
+  for p in mpixels_abgr_8888(image):
+    p = color
+
+# --------------------------------------------------------------------------------------------------
+
+proc set_pixel*(image: var Image2d; x, y: int32; color: Color) =
   case image.format:
-  of IF_ABGR_8888:
-    var d: uint32 = encode_abgr_8888(color)
-    for pixel in mdwords(image): pixel[] = d
-  of IF_GRAY_8:
-    var d: uint8 = encode_gray_8(color)
-    for pixel in mbytes(image): pixel[] = d
-  of IF_SABGR_8888:
-    var d: uint32 = encode_abgr_8888(color.to_srgb)
-    for pixel in mdwords(image): pixel[] = d
-  else:
-    assert(false, "clear: Unsupported image format")
+  of ImageFormat.gray_8:    image.set_pixel_gray_8(x, y, color.gray.encode_gray_8)
+  of ImageFormat.gray_16:   image.set_pixel_gray_16(x, y, color.gray.encode_gray_16)
+  of ImageFormat.abgr_8888: image.set_pixel_abgr_8888(x, y, color.encode_abgr_8888)
+  else: do_assert(false, "set_pixel: unsupported image format")
 
 
-proc print_ascii*(image: Image; x1, y1, x2, y2: int32) =
-  for py in y1 ..< y2:
-    for px in x1 ..< x2:
-      let p = image.get_pixel(int32 px, int32 py)
-      let u = p.encode_abgr_8888()
-      let g = gray(p)
-      stdout.write(if g.r < 0.5f: "X" else: ".")
-    stdout.write("\n")
+proc get_pixel*(image: var Image2d; x, y: int32): Color =
+  case image.format:
+  of ImageFormat.gray_8:    result = image.get_pixel_gray_8(x, y).decode_gray_8.color
+  of ImageFormat.gray_16:   result = image.get_pixel_gray_16(x, y).decode_gray_16.color
+  of ImageFormat.abgr_8888: result = image.get_pixel_abgr_8888(x, y).decode_abgr_8888
+  else: do_assert(false, "get_pixel: unsupported image format")
+
+
+iterator xy_pixels*(image: Image2d): (int32, int32, Color) =
+  case image.format:
+  of ImageFormat.gray_8:    (for x, y, p in image.xy_pixels_gray_8: yield (x, y, p.decode_gray_8.color))
+  of ImageFormat.gray_16:   (for x, y, p in image.xy_pixels_gray_16: yield (x, y, p.decode_gray_16.color))
+  of ImageFormat.abgr_8888: (for x, y, p in image.xy_pixels_abgr_8888: yield (x, y, p.decode_abgr_8888))
+  else: do_assert(false, "xy_pixels: unsupported image format")
+
+
+iterator xy*(image: Image2d): (int32, int32) =
+  for y in 0i32 ..< image.height:
+    for x in 0i32 ..< image.width:
+      yield (x, y)
+
+
+proc clear*(image: var Image2d; color: Color) =
+  case image.format:
+  of ImageFormat.gray_8:    image.clear_gray_8(color.gray.encode_gray_8)
+  of ImageFormat.gray_16:   image.clear_gray_16(color.gray.encode_gray_16)
+  of ImageFormat.abgr_8888: image.clear_abgr_8888(color.encode_abgr_8888)
+  else: do_assert(false, "clear: unsupported image format")
+
+# --------------------------------------------------------------------------------------------------
+
+proc premultiply_alpha*(image: var Image2d) =
+  for x, y, color in image.xy_pixels:
+    image.set_pixel(x, y, color.premultiply)
+
+# --------------------------------------------------------------------------------------------------
+
+when is_main_module:
+  block:
+    var img = init_image(8, 8, ImageFormat.gray_8)
+
+    set_pixel_gray_8(img, 0, 0, 101)
+    do_assert(get_pixel_gray_8(img, 0, 0) == 101)
+
+    set_pixel_gray_8(img, 3, 0, 102)
+    do_assert(get_pixel_gray_8(img, 3, 0) == 102)
+
+    set_pixel_gray_8(img, 3, 2, 103)
+    do_assert(get_pixel_gray_8(img, 3, 2) == 103)
+
+    set_pixel_gray_8(img, 7, 7, 104)
+    do_assert(get_pixel_gray_8(img, 7, 7) == 104)
+
+    for x, y, p in xy_mpixels_gray_8(img):
+      p = uint8(x xor y)
+
+    for x, y, p in xy_pixels_gray_8(img):
+      do_assert(p == uint8(x xor y))
+
+    img.clear_gray_8(123u8)
+
+    for x, y, p in xy_pixels_gray_8(img):
+      do_assert(p == 123u8)
+
+    img.set_pixel(2, 2, COLOR_WHITE)
+    do_assert(img.get_pixel(2, 2) == COLOR_WHITE)
+
+    img.set_pixel(2, 3, COLOR_BLACK)
+    do_assert(img.get_pixel(2, 3) == COLOR_BLACK)
+
+    img.destroy()
+
+  block:
+    var img = init_image(8, 8, ImageFormat.abgr_8888)
+
+    set_pixel_abgr_8888(img, 0, 0, 0xAABBCCDDu32)
+    do_assert(get_pixel_abgr_8888(img, 0, 0) == 0xAABBCCDDu32)
+
+    set_pixel_abgr_8888(img, 3, 2, 0xDEADBEEFu32)
+    do_assert(get_pixel_abgr_8888(img, 3, 2) == 0xDEADBEEFu32)
+
+    set_pixel_abgr_8888(img, 7, 7, 0xCAFEBABEu32)
+    do_assert(get_pixel_abgr_8888(img, 7, 7) == 0xCAFEBABEu32)
+
+    for x, y, p in xy_mpixels_abgr_8888(img):
+      p = uint32(x xor y)
+
+    for x, y, p in xy_pixels_abgr_8888(img):
+      do_assert(p == uint32(x xor y))
+
+    #img.set_pixel(2, 3, COLOR_RED)
+    #echo COLOR_RED
+    #echo img.get_pixel(2, 3)
+
+    img.destroy()
+
+  echo "ok"
