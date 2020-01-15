@@ -126,6 +126,42 @@ func `-`*(a, b: Quat): Quat =
   result.w = a.w - b.w
 
 
+func forward*(a: Quat): Vec4 =
+  let xx = a.x * a.x
+  let xz = a.x * a.z
+  let xw = a.x * a.w
+  let yy = a.y * a.y
+  let yz = a.y * a.z
+  let yw = a.y * a.w
+  result.x =      2f * (xz + yw)
+  result.y =      2f * (yz - xw)
+  result.z = 1f - 2f * (xx + yy)
+
+
+func up*(a: Quat): Vec4 =
+  let xx = a.x * a.x
+  let xy = a.x * a.y
+  let xw = a.x * a.w
+  let yz = a.y * a.z
+  let zz = a.z * a.z
+  let zw = a.z * a.w
+  result.x =      2f * (xy - zw)
+  result.y = 1f - 2f * (xx + zz)
+  result.z =      2f * (yz + xw)
+
+
+func left*(a: Quat): Vec4 =
+  let xy = a.x * a.y
+  let xz = a.x * a.z
+  let yy = a.y * a.y
+  let yw = a.y * a.w
+  let zz = a.z * a.z
+  let zw = a.z * a.w
+  result.x = 1f - 2f * (yy + zz)
+  result.y =      2f * (xy + zw)
+  result.z =      2f * (xz - yw)
+
+
 func to_matrix*(a: Quat): Mat4 =
   let xx = a.x * a.x
   let xy = a.x * a.y
@@ -140,13 +176,13 @@ func to_matrix*(a: Quat): Mat4 =
   let zw = a.z * a.w
 
   result.c0.x = 1f - 2f * (yy + zz)
-  result.c1.x =      2f * (xy - zw)
-  result.c2.x =      2f * (xz + yw)
   result.c0.y =      2f * (xy + zw)
-  result.c1.y = 1f - 2f * (xx + zz)
-  result.c2.y =      2f * (yz - xw)
   result.c0.z =      2f * (xz - yw)
+  result.c1.x =      2f * (xy - zw)
+  result.c1.y = 1f - 2f * (xx + zz)
   result.c1.z =      2f * (yz + xw)
+  result.c2.x =      2f * (xz + yw)
+  result.c2.y =      2f * (yz - xw)
   result.c2.z = 1f - 2f * (xx + yy)
 
   result.c0.w = 0f
@@ -154,6 +190,11 @@ func to_matrix*(a: Quat): Mat4 =
   result.c2.w = 0f
 
   result.c3 = vec4(0f, 0f, 0f, 1f)
+
+
+func to_matrix*(rot: Quat; pos: Vec4): Mat4 =
+  result = to_matrix(rot)
+  result.c3 = pos
 
 
 func to_axis_and_angle*(q: Quat): (Vec4, float32) =

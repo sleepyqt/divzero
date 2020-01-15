@@ -194,7 +194,7 @@ func ray3*(origin, direction: Vec4): Ray3 =
   result.direction = direction
 
 
-proc ray_cast*(ray: Ray3; plane: Plane3; info: out RaycastInfo) =
+proc ray_cast*(ray: Ray3; plane: Plane3; info: var RaycastInfo) =
   let pn = dot(ray.origin, plane.normal)
   let nd = dot(ray.direction, plane.normal)
 
@@ -211,7 +211,7 @@ proc ray_cast*(ray: Ray3; plane: Plane3; info: out RaycastInfo) =
       info.hit = false
 
 
-proc ray_cast*(ray: Ray3; sphere: Sphere; info: out RaycastInfo) =
+proc ray_cast*(ray: Ray3; sphere: Sphere; info: var RaycastInfo) =
   let d  = normalize(ray.direction)
   let e  = sphere.position - ray.origin
   let r2 = sphere.r * sphere.r

@@ -1,11 +1,11 @@
 # Package
 
-version       = "0.1.1"
+version       = "0.2.0"
 author        = "sleepyqt"
 description   = "Vector math library"
 license       = "MIT"
 
 # Dependencies
 
-requires "nim >= 0.18.0"
+requires "nim >= 1.0.4"
 
