@@ -1,7 +1,5 @@
 import divzero / [color]
 
-# --------------------------------------------------------------------------------------------------
-
 type ImageFormat* = enum
   IfGray8,
   IfGray16,
@@ -19,8 +17,6 @@ const format_stride* = [
   3, # sbgr888
 ]
 
-# --------------------------------------------------------------------------------------------------
-
 type
   Image2d* = object
     format*: ImageFormat
@@ -31,8 +27,6 @@ type
     data*: pointer              ## pointer to memory containing pixel data
 
   MipChain* = array[16, int] ## offsets into Image2d.data
-
-# --------------------------------------------------------------------------------------------------
 
 template roundup(x, v: int32): int32 = (x + (v - 1)) and not (v - 1)
 
@@ -54,15 +48,11 @@ proc destroy*(image: var Image2d) =
   assert(image.data != nil)
   image.data.dealloc()
 
-# --------------------------------------------------------------------------------------------------
-
 proc inBounds*(image: Image2d; x, y: int32): bool =
   (x >= 0) and (y >= 0) and (x < image.width) and (y < image.height)
 
 proc row*(image: Image2d; y: int; T: typedesc): ptr UncheckedArray[T] =
   cast[ptr UncheckedArray[T]](cast[int](image.data) + y * image.pitch)
-
-# --------------------------------------------------------------------------------------------------
 
 proc setPixelGray8*(image: var Image2d; x, y: int32; color: uint8) =
   assert(inBounds(image, x, y))
@@ -96,8 +86,6 @@ proc clearGray8*(image: var Image2d; color: uint8) =
   for p in mpixelsGray8(image):
     p = color
 
-# --------------------------------------------------------------------------------------------------
-
 proc setPixelGray16*(image: var Image2d; x, y: int32; color: uint16) =
   assert(inBounds(image, x, y))
   image.row(y, uint16)[x] = color
@@ -130,8 +118,6 @@ proc clearGray16*(image: var Image2d; color: uint16) =
   for p in mpixelsGray16(image):
     p = color
 
-# --------------------------------------------------------------------------------------------------
-
 proc setPixelAbgr8888*(image: var Image2d; x, y: int32; color: uint32) =
   assert(inBounds(image, x, y))
   image.row(y, uint32)[x] = color
@@ -163,8 +149,6 @@ iterator mPixelsAbgr8888*(image: var Image2d): var uint32 =
 proc clearAbgr8888*(image: var Image2d; color: uint32) =
   for p in mpixelsAbgr8888(image):
     p = color
-
-# --------------------------------------------------------------------------------------------------
 
 proc setPixel*(image: var Image2d; x, y: int32; color: Color) =
   case image.format:
@@ -199,13 +183,9 @@ proc clear*(image: var Image2d; color: Color) =
   of IfAbgr8888: image.clearAbgr8888(color.encodeAbgr8888)
   else: doAssert(false, "clear: unsupported image format")
 
-# --------------------------------------------------------------------------------------------------
-
 proc premultiplyAlpha*(image: var Image2d) =
   for x, y, color in image.xyPixels:
     image.setPixel(x, y, color.premultiply)
-
-# --------------------------------------------------------------------------------------------------
 
 when isMainModule:
   block:

@@ -1,4 +1,4 @@
-import std     / [math]
+import std / [math]
 import divzero / [vec4]
 
 ## This module implements 4x4 transformation matrix.
@@ -46,7 +46,6 @@ func `*`*(a, b: Mat4): Mat4 =
   result.c2.w = a.c0.w * b.c2.x + a.c1.w * b.c2.y + a.c2.w * b.c2.z + a.c3.w * b.c2.w
   result.c3.w = a.c0.w * b.c3.x + a.c1.w * b.c3.y + a.c2.w * b.c3.z + a.c3.w * b.c3.w
 
-
 func `*`*(m: Mat4; c: Vec4): Vec4 =
   ## multiply matrix with vector.
   ## ``c`` treated as column vector.
@@ -55,8 +54,6 @@ func `*`*(m: Mat4; c: Vec4): Vec4 =
   result.z = m.c0.z * c.x + m.c1.z * c.y + m.c2.z * c.z + m.c3.z * c.w
   result.w = m.c0.w * c.x + m.c1.w * c.y + m.c2.w * c.z + m.c3.w * c.w
 
-# --------------------------------------------------------------------------------------------------
-
 func mat4*(): Mat4 =
   ## creates new identity matrix
   result.c0 = Vec4(x: 1.0f, y: 0.0f, z: 0.0f, w: 0.0f)
@@ -64,48 +61,42 @@ func mat4*(): Mat4 =
   result.c2 = Vec4(x: 0.0f, y: 0.0f, z: 1.0f, w: 0.0f)
   result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
 
-
-func mat4_t*(a: Vec4): Mat4 =
+func mat4T*(a: Vec4): Mat4 =
   ## creates new translation matrix
   result.c0 = Vec4(x: 1.0f, y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: 1.0f, z: 0.0f, w: 0.0f)
   result.c2 = Vec4(x: 0.0f, y: 0.0f, z: 1.0f, w: 0.0f)
   result.c3 = Vec4(x: a.x,  y: a.y,  z: a.z,  w: 1.0f)
 
-
-func mat4_t*(x, y, z: float32): Mat4 =
+func mat4T*(x, y, z: float32): Mat4 =
   ## creates new translation matrix
   result.c0 = Vec4(x: 1.0f, y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: 1.0f, z: 0.0f, w: 0.0f)
   result.c2 = Vec4(x: 0.0f, y: 0.0f, z: 1.0f, w: 0.0f)
   result.c3 = Vec4(x: x,    y: y,    z: z,    w: 1.0f)
 
-
-func mat4_s*(a: Vec4): Mat4 =
+func mat4S*(a: Vec4): Mat4 =
   ## creates new scale matrix
   result.c0 = Vec4(x: a.x,  y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: a.y,  z: 0.0f, w: 0.0f)
   result.c2 = Vec4(x: 0.0f, y: 0.0f, z: a.z,  w: 0.0f)
   result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
 
-
-func mat4_s*(x, y, z: float32): Mat4 =
+func mat4S*(x, y, z: float32): Mat4 =
   ## creates new scale matrix
   result.c0 = Vec4(x: x,    y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: y,    z: 0.0f, w: 0.0f)
   result.c2 = Vec4(x: 0.0f, y: 0.0f, z: z,    w: 0.0f)
   result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
 
-
-func mat4_s*(s: float32): Mat4 =
+func mat4S*(s: float32): Mat4 =
   ## creates new scale matrix
   result.c0 = Vec4(x: s,    y: 0.0f, z: 0.0f, w: 0.0f)
   result.c1 = Vec4(x: 0.0f, y: s,    z: 0.0f, w: 0.0f)
   result.c2 = Vec4(x: 0.0f, y: 0.0f, z: s,    w: 0.0f)
   result.c3 = Vec4(x: 0.0f, y: 0.0f, z: 0.0f, w: 1.0f)
 
-
-func mat4_rx*(phi: float32): Mat4 =
+func mat4RX*(phi: float32): Mat4 =
   ## creates new matrix rotated around x axis
   let s = sin(phi)
   let c = cos(phi)
@@ -114,8 +105,7 @@ func mat4_rx*(phi: float32): Mat4 =
   result.c2 = vec4(0.0, -s,  c,   0.0)
   result.c3 = vec4(0.0, 0.0, 0.0, 1.0)
 
-
-func mat4_ry*(phi: float32): Mat4 =
+func mat4RY*(phi: float32): Mat4 =
   ## creates new matrix rotated around y axis
   let s = sin(phi)
   let c = cos(phi)
@@ -124,8 +114,7 @@ func mat4_ry*(phi: float32): Mat4 =
   result.c2 = vec4(s  , 0.0, c  , 0.0)
   result.c3 = vec4(0.0, 0.0, 0.0, 1.0)
 
-
-func mat4_rz*(phi: float32): Mat4 =
+func mat4RZ*(phi: float32): Mat4 =
   ## creates new matrix rotated around z axis
   let s = sin(phi)
   let c = cos(phi)
@@ -134,13 +123,10 @@ func mat4_rz*(phi: float32): Mat4 =
   result.c2 = vec4(0.0, 0.0, 1.0, 0.0)
   result.c3 = vec4(0.0, 0.0, 0.0, 1.0)
 
-
-func mat4_rxyz*(a: Vec4): Mat4 =
+func mat4RXYZ*(a: Vec4): Mat4 =
   result = mat4_rz(a.z) * mat4_ry(a.y) * mat4_rx(a.x)
 
-# --------------------------------------------------------------------------------------------------
-
-func view_look_at*(eye, target, up: Vec4): Mat4 =
+func viewLookAt*(eye, target, up: Vec4): Mat4 =
   ## creates viewing matrix for camera
   ## `eye` - camera position
   ## `target` - camera target position
@@ -153,7 +139,6 @@ func view_look_at*(eye, target, up: Vec4): Mat4 =
   result.c2 = vec4(l.z, u.z, -f.z, 0.0f)
   result.c3 = vec4(-dot(l, eye), -dot(u, eye), dot(f, eye), 1f)
 
-
 func ortho*(l, r, b, t, n, f: float32): Mat4 =
   ## creates orthographics projection matrix
   ## `l`, `r` - coordinates for the left and right vertical clipping planes
@@ -163,7 +148,6 @@ func ortho*(l, r, b, t, n, f: float32): Mat4 =
   result.c1 = vec4(0f, 2f / (t - b), 0f, 0f)
   result.c2 = vec4(0f, 0f, -2 / (f - n), 0f)
   result.c3 = vec4(-((r+l)/(r-l)), -((t+b)/(t-b)), -((f+n)/(f-n)), 1f)
-
 
 func persp*(fovy, aspect, znear, zfar: float32): Mat4 =
   ## creates perspective projection matrix
@@ -192,14 +176,11 @@ func persp*(fovy, aspect, znear, zfar: float32): Mat4 =
   result.c3.z = -((2f * znear * zfar) / (zfar - znear))
   result.c3.w = 0f
 
-# --------------------------------------------------------------------------------------------------
-
 func transpose*(m: Mat4): Mat4 =
   result.c0 = vec4(m.c0.x, m.c1.x, m.c2.x, m.c3.x)
   result.c1 = vec4(m.c0.y, m.c1.y, m.c2.y, m.c3.y)
   result.c2 = vec4(m.c0.z, m.c1.z, m.c2.z, m.c3.z)
   result.c3 = vec4(m.c0.w, m.c1.w, m.c2.w, m.c3.w)
-
 
 func inverse*(m: Mat4): Mat4 =
   result.c0.x =  m.c1.y * m.c2.z * m.c3.w - m.c1.y * m.c2.w * m.c3.z -
@@ -254,15 +235,14 @@ func inverse*(m: Mat4): Mat4 =
                  m.c0.y * result.c1.x +
                  m.c0.z * result.c2.x +
                  m.c0.w * result.c3.x
-  if (det == 0.0f): assert(false, "matrix determinant is zero")
-  let inv_det: float32 = 1.0f / det
-  result.c0 = result.c0 * inv_det
-  result.c1 = result.c1 * inv_det
-  result.c2 = result.c2 * inv_det
-  result.c3 = result.c3 * inv_det
+  assert(det != 0.0f, "matrix determinant is zero")
+  let invDet: float32 = 1.0f / det
+  result.c0 = result.c0 * invDet
+  result.c1 = result.c1 * invDet
+  result.c2 = result.c2 * invDet
+  result.c3 = result.c3 * invDet
 
-
-func fast_inverse*(m: Mat4): Mat4 =
+func fastInverse*(m: Mat4): Mat4 =
   result.c0.x = m.c0.x
   result.c0.y = m.c1.x
   result.c0.z = m.c2.x
@@ -283,31 +263,25 @@ func fast_inverse*(m: Mat4): Mat4 =
   result.c3.z = -(result.c0.z * m.c3.x + result.c1.z * m.c3.y + result.c2.z * m.c3.z)
   result.c3.w = 1.0f
 
-
-func normalize_zaxis*(m: Mat4): Mat4 =
+func normalizeZAxis*(m: Mat4): Mat4 =
   result.c0 = normalize cross(m.c1, m.c2)
   result.c1 = normalize cross(m.c2, m.c0)
   result.c2 = normalize m.c2
   result.c3 = m.c3
 
-# --------------------------------------------------------------------------------------------------
-
-func window_to_near_clip*(x, y, width, height: float32): Vec4 =
+func windowToNearClip*(x, y, width, height: float32): Vec4 =
   ## transforms point on near clip plane to clip space
   result.x = (2f * x) / width - 1f
   result.y = 1f - (2f * y) / height
   result.z = -1f
   result.w = 1f
 
-
-func window_to_far_clip*(x, y, width, height: float32): Vec4 =
+func windowToFarClip*(x, y, width, height: float32): Vec4 =
   ## transforms point on far clip plane to clip space
   result.x = (2f * x) / width - 1f
   result.y = 1f - (2f * y) / height
   result.z = 0f
   result.w = 1f
-
-# --------------------------------------------------------------------------------------------------
 
 func pretty*(m: Mat4): string =
   result = $m.c0 & "\n"
@@ -315,7 +289,5 @@ func pretty*(m: Mat4): string =
   result.add $m.c2 & "\n"
   result.add $m.c3
 
-# --------------------------------------------------------------------------------------------------
-
-proc selftest* =
+when isMainModule:
   discard

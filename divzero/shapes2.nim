@@ -1,4 +1,4 @@
-import std     / [math]
+import std / [math]
 import divzero / [vec2, mat3, mathfn]
 
 type
@@ -70,16 +70,16 @@ proc rectangle*(aabb: AABB2): Rectangle =
   result.pos = aabb.min
   result.size = aabb.max - aabb.min
 
-proc top_left*(rect: Rectangle): Vec2 {.inline.} =
+proc topLeft*(rect: Rectangle): Vec2 {.inline.} =
   result = rect.pos
 
-proc top_right*(rect: Rectangle): Vec2 {.inline.} =
+proc topRight*(rect: Rectangle): Vec2 {.inline.} =
   result = rect.pos + vec2(rect.size.x, 0f)
 
-proc bottom_left*(rect: Rectangle): Vec2 {.inline.} =
+proc bottomLeft*(rect: Rectangle): Vec2 {.inline.} =
   result = rect.pos + vec2(0f, rect.size.y)
 
-proc bottom_right*(rect: Rectangle): Vec2 {.inline.} =
+proc bottomRight*(rect: Rectangle): Vec2 {.inline.} =
   result = rect.pos + rect.size
 
 proc left*(rect: Rectangle): float32 {.inline.} =
@@ -198,14 +198,14 @@ proc bottom_border*(a: Rectangle; width: float32): Rectangle =
   result.size.x = a.size.x
   result.size.y = width
 
-proc split2_horz_pixels*(a: Rectangle; split_pos: float32): (Rectangle, Rectangle) =
+proc split2_horzPixels*(a: Rectangle; splitPos: float32): (Rectangle, Rectangle) =
   result[0].pos.x  = a.pos.x
   result[0].pos.y  = a.pos.y
-  result[0].size.x = split_pos
+  result[0].size.x = splitPos
   result[0].size.y = a.size.y
-  result[1].pos.x  = a.pos.x + split_pos
+  result[1].pos.x  = a.pos.x + splitPos
   result[1].pos.y  = a.pos.y
-  result[1].size.x = a.size.x - split_pos
+  result[1].size.x = a.size.x - splitPos
   result[1].size.y = a.size.y
 
 # Ray2
@@ -257,10 +257,10 @@ func midpoint*(edge: Edge): Vec2 =
   result.x = (edge.p0.x + edge.p1.x) * 0.5f
   result.y = (edge.p0.y + edge.p1.y) * 0.5f
 
-func normal_cw*(edge: Edge): Vec2 =
+func normalCw*(edge: Edge): Vec2 =
   result = direction(edge.p0, edge.p1).right
 
-func normal_ccw*(edge: Edge): Vec2 =
+func normalCcw*(edge: Edge): Vec2 =
   result = direction(edge.p0, edge.p1).left
 
 func project*(edge: Edge; axis: Vec2): Projection =
@@ -281,22 +281,22 @@ proc plane2*(normal, origin: Vec2): Plane2 =
   result.normal = normal
   result.dist = dot(normal, origin)
 
-proc plane2_cw*(a, b: Vec2): Plane2 =
+proc plane2CW*(a, b: Vec2): Plane2 =
   ## build plane from two points
   result.normal = direction(a, b).right()
   result.dist = dot(result.normal, a)
 
-proc plane2_ccw*(a, b: Vec2): Plane2 =
+proc plane2CCW*(a, b: Vec2): Plane2 =
   ## build plane from two points
   result.normal = direction(a, b).left()
   result.dist = dot(result.normal, a)
 
-proc plane2_cw*(edge: Edge): Plane2 =
+proc plane2CW*(edge: Edge): Plane2 =
   ## builds plane from edge
   result.normal = direction(edge.p0, edge.p1).right()
   result.dist   = dot(result.normal, edge.p0)
 
-proc plane2_ccw*(edge: Edge): Plane2 =
+proc plane2CCW*(edge: Edge): Plane2 =
   ## builds plane from edge
   result.normal = direction(edge.p0, edge.p1).left()
   result.dist   = dot(result.normal, edge.p0)
@@ -309,7 +309,7 @@ proc center*(plane: Plane2): Vec2 =
   ## returns point on plane
   result = plane.normal * plane.dist
 
-iterator edges*(points: open_array[Vec2]): Edge =
+iterator edges*(points: openArray[Vec2]): Edge =
   let L = len(points)
   for i in 0 ..< L:
     let i0 = i
@@ -321,7 +321,7 @@ proc `*`*(m: Mat3; plane: Plane2): Plane2 =
   let c = plane.center
   let l = m * (c + plane.normal.left)
   let r = m * (c + plane.normal.right)
-  result = plane2_ccw(l, r)
+  result = plane2Ccw(l, r)
 
 # AABB2
 
@@ -348,7 +348,7 @@ proc aabb2*(triangle: Triangle): AABB2 {.inline.} =
 proc size*(box: AABB2): Vec2 {.inline.} =
   result = box.max - box.min
 
-proc half_size*(box: AABB2): Vec2 {.inline.} =
+proc halfSize*(box: AABB2): Vec2 {.inline.} =
   result = box.size * 0.5f
 
 proc center*(box: AABB2): Vec2 {.inline.} =
@@ -370,25 +370,25 @@ proc `*`*(m: Mat3; box: AABB2): AABB2 {.inline.} =
   result.min = m * box.min
   result.max = m * box.max
 
-func top_left*(box: AABB2): Vec2 {.inline.} =
+func topLeft*(box: AABB2): Vec2 {.inline.} =
   result = box.min
 
-func top_right*(box: AABB2): Vec2 {.inline.} =
+func topRight*(box: AABB2): Vec2 {.inline.} =
   result.x = box.max.x
   result.y = box.min.y
 
-func bottom_left*(box: AABB2): Vec2 {.inline.} =
+func bottomLeft*(box: AABB2): Vec2 {.inline.} =
   result.x = box.min.x
   result.y = box.max.y
 
-func bottom_right*(box: AABB2): Vec2 {.inline.} =
+func bottomRight*(box: AABB2): Vec2 {.inline.} =
   result = box.max
 
 func project*(box: AABB2; axis: Vec2): Projection =
-  let p0 = dot(axis, box.top_left)
-  let p1 = dot(axis, box.top_right)
-  let p2 = dot(axis, box.bottom_left)
-  let p3 = dot(axis, box.bottom_right)
+  let p0 = dot(axis, box.topLeft)
+  let p1 = dot(axis, box.topRight)
+  let p2 = dot(axis, box.bottomLeft)
+  let p3 = dot(axis, box.bottomRight)
   result.min = min(p0, p1, p2, p3)
   result.max = max(p0, p1, p2, p3)
 
@@ -403,7 +403,7 @@ iterator points*(hull: ConvexHull): Vec2 =
   for i in 0 ..< hull.count:
     yield hull.points[i]
 
-iterator index_and_points*(hull: ConvexHull): (int, Vec2) =
+iterator indexAndPoints*(hull: ConvexHull): (int, Vec2) =
   for i in 0 ..< hull.count:
     yield (int(i), hull.points[i])
 
@@ -429,11 +429,11 @@ iterator planes*(hull: ConvexHull): Plane2 =
     let i1 = (i + 1) mod hull.count
     let p0 = hull.points[i0]
     let p1 = hull.points[i1]
-    yield plane2_cw(p0, p1)
+    yield plane2CW(p0, p1)
 
 func offset*(hull: ConvexHull; dir: Vec2): ConvexHull =
   result.count = hull.count
-  for i, point in hull.index_and_points:
+  for i, point in hull.indexAndPoints:
     result.points[i] = point + dir
 
 # Triangle
@@ -449,27 +449,27 @@ proc triangle*(ax, ay, bx, by, cx, cy: float32): Triangle =
   result.b.x = bx; result.b.y = by
   result.c.x = cx; result.c.y = cy
 
-proc signed_area*(a, b, c: Vec2): float32 =
+proc signedArea*(a, b, c: Vec2): float32 =
   ## returns signed area of triangle formed by points `a` `b` `c`
   let side1 = b - a
   let side2 = c - a
   result = cross(side1, side2)
 
-proc signed_area*(triangle: Triangle): float32 =
+proc signedArea*(triangle: Triangle): float32 =
   ## returns signed area of triangle
   let side1 = triangle.b - triangle.a
   let side2 = triangle.c - triangle.a
   result = cross(side1, side2)
 
-func edge_ab*(triangle: Triangle): Edge =
+func edgeAB*(triangle: Triangle): Edge =
   result.p0 = triangle.a
   result.p1 = triangle.b
 
-func edge_bc*(triangle: Triangle): Edge =
+func edgeBC*(triangle: Triangle): Edge =
   result.p0 = triangle.b
   result.p1 = triangle.c
 
-func edge_ca*(triangle: Triangle): Edge =
+func edgeCA*(triangle: Triangle): Edge =
   result.p0 = triangle.c
   result.p1 = triangle.a
 
@@ -498,35 +498,35 @@ func project*(triangle: Triangle; axis: Vec2): Projection =
   result.max = max(pa, pb, pc)
 
 proc inside*(circle: Circle; point: Vec2): bool =
-  result = distance_sq(circle.pos, point) < circle.radius * circle.radius
+  result = distanceSq(circle.pos, point) < circle.radius * circle.radius
 
 proc inside*(circle: Circle; m: Mat3; point: Vec2): bool =
-  result = distance_sq(m * circle.pos, point) < circle.radius * circle.radius
+  result = distanceSq(m * circle.pos, point) < circle.radius * circle.radius
 
 proc inside*(rect: Rectangle; point: Vec2): bool =
   (point.x >= rect.pos.x) and (point.y >= rect.pos.y) and
     (point.x < (rect.pos.x + rect.size.x)) and (point.y < (rect.pos.y + rect.size.y))
 
-proc inside*(planes: open_array[Plane2]; point: Vec2): bool =
+proc inside*(planes: openArray[Plane2]; point: Vec2): bool =
   ## checks if `point` inside convex hull formed by `planes`
   result = true
   for plane in planes:
     if distance(plane, point) < 0:
       return false
 
-proc inside*(points: open_array[Vec2]; point: Vec2): bool =
+proc inside*(points: openArray[Vec2]; point: Vec2): bool =
   ## checks if `point` inside convex hull formed by `points` in clockwise direction
   result = true
   for edge in points.edges:
-    let plane = plane2_cw(edge)
+    let plane = plane2CW(edge)
     if distance(plane, point) < 0:
       return false
 
-proc inside*(points: open_array[Vec2]; point: Vec2; info: var CollisionInfo) =
+proc inside*(points: openArray[Vec2]; point: Vec2; info: var CollisionInfo) =
   info.hit = true
   var closest = high float32
   for edge in points.edges:
-    let plane = plane2_cw(edge)
+    let plane = plane2CW(edge)
     var dist = distance(plane, point)
     if dist < 0:
       info.hit = false
@@ -553,9 +553,9 @@ proc inside*(aabb: AABB2; point: Vec2): bool =
 
 proc inside*(triangle: Triangle; point: Vec2): bool =
   ## checks if `point` inside `triangle`
-  let c0 = signed_area(point, triangle.a, triangle.b) < 0f
-  let c1 = signed_area(point, triangle.b, triangle.c) < 0f
-  let c2 = signed_area(point, triangle.c, triangle.a) < 0f
+  let c0 = signedArea(point, triangle.a, triangle.b) < 0f
+  let c1 = signedArea(point, triangle.b, triangle.c) < 0f
+  let c2 = signedArea(point, triangle.c, triangle.a) < 0f
   result = (c0 == c1) and (c1 == c2)
 
 proc overlaps*(a: Rectangle; b: Rectangle): bool =
@@ -647,7 +647,7 @@ func overlaps*(a: AABB2; b: Triangle): bool =
 
 proc overlaps*(a: Circle; b: Circle): bool =
   let r2 = a.radius + b.radius
-  result = distance_sq(a.pos, b.pos) < (r2 * r2)
+  result = distanceSq(a.pos, b.pos) < (r2 * r2)
 
 proc overlaps*(a: Circle; b: Plane2): bool =
   let dist = distance(b, a.pos)
@@ -655,7 +655,7 @@ proc overlaps*(a: Circle; b: Plane2): bool =
 
 proc overlaps*(a: Circle; b: Circle; info: var CollisionInfo) =
   let r2 = a.radius + b.radius
-  let ds = distance_sq(a.pos, b.pos)
+  let ds = distanceSq(a.pos, b.pos)
   info.hit = ds < (r2 * r2)
   if info.hit:
     info.depth  = r2 - sqrt(ds)
@@ -664,33 +664,33 @@ proc overlaps*(a: Circle; b: Circle; info: var CollisionInfo) =
     else:
       info.normal = vec2(1f, 0f)
 
-proc overlaps*(a_points, b_points: open_array[Vec2]; info: var CollisionInfo) =
+proc overlaps*(aPoints, bPoints: openArray[Vec2]; info: var CollisionInfo) =
   ## checks if two convex hulls formed by points overlaps
   ## points must be in clockwise order
   info.hit = true
 
   var closest = high float32
 
-  for edge in edges(a_points):
-    let plane = plane2_cw(edge)
-    var a_max_proj = low  float32
-    var a_min_proj = high float32
-    for point in a_points:
+  for edge in edges(aPoints):
+    let plane = plane2CW(edge)
+    var a_maxProj = low  float32
+    var a_minProj = high float32
+    for point in aPoints:
       let proj = dot(plane.normal, point)
-      if proj < a_min_proj: a_min_proj = proj
-      if proj > a_max_proj: a_max_proj = proj
-    var b_max_proj = low  float32
-    var b_min_proj = high float32
-    for point in b_points:
+      if proj < a_minProj: a_minProj = proj
+      if proj > a_maxProj: a_maxProj = proj
+    var b_maxProj = low  float32
+    var b_minProj = high float32
+    for point in bPoints:
       let proj = dot(plane.normal, point)
-      if proj < b_min_proj: b_min_proj = proj
-      if proj > b_max_proj: b_max_proj = proj
-    let test_a = a_min_proj - b_max_proj
-    let test_b = b_min_proj - a_max_proj
-    if (test_a > 0) or (test_b > 0):
+      if proj < b_minProj: b_minProj = proj
+      if proj > b_maxProj: b_maxProj = proj
+    let testA = a_minProj - b_maxProj
+    let test_b = b_minProj - a_maxProj
+    if (testA > 0) or (test_b > 0):
       info.hit = false
       return
-    let dist = -(b_max_proj - a_min_proj)
+    let dist = -(b_maxProj - a_minProj)
     if abs(dist) < closest:
       info.depth = dist
       info.normal = plane.normal
@@ -709,11 +709,11 @@ proc overlaps*(a: Rectangle; b: Rectangle; info: var CollisionInfo) =
   info.hit = over_x and over_y
 
 proc overlaps*(a: AABB2; b: AABB2; info: var CollisionInfo) =
-  let mid_a = a.center
+  let midA = a.center
   let mid_b = b.center
-  let eA    = abs a.half_size
-  let eB    = abs b.half_size
-  let d     = mid_b - mid_a
+  let eA    = abs a.halfSize
+  let eB    = abs b.halfSize
+  let d     = mid_b - midA
   let dx = eA.x + eB.x - abs(d.x)
   let dy = eA.y + eB.y - abs(d.y)
   info.hit = (dx >= 0) and (dy >= 0)
@@ -789,17 +789,17 @@ func overlaps*(a: ConvexHull; b: ConvexHull; info: var CollisionInfo) =
         info.normal = axis
   info.hit = true
 
-proc ray_test*(ray: Ray2; circle: Circle): bool =
+proc rayTest*(ray: Ray2; circle: Circle): bool =
   ## checks if `ray` overlaps `circle`
   let d = circle.pos - ray.origin
   let r = ray.direction
   let l = ray.direction.left
   let X = abs(dot(d, l)) <= circle.radius
   let Y = dot(d, r) >= 0
-  let Z = len_sq(d) <= circle.radius * circle.radius
+  let Z = lenSq(d) <= circle.radius * circle.radius
   result = (X and Y) or Z
 
-proc ray_cast*(ray: Ray2; circle: Circle; out_ray: var Ray2): bool =
+proc rayCast*(ray: Ray2; circle: Circle; outRay: var Ray2): bool =
   let d = circle.pos - ray.origin
   let r = ray.direction
   let l = ray.direction.left
@@ -810,21 +810,21 @@ proc ray_cast*(ray: Ray2; circle: Circle; out_ray: var Ray2): bool =
   else:
     result = true
     let t = sqrt(circle.radius * circle.radius - a * a)
-    out_ray.origin = ray.origin + ray.direction * (b - t)
-    out_ray.direction = normalize(out_ray.origin - circle.pos)
+    outRay.origin = ray.origin + ray.direction * (b - t)
+    outRay.direction = normalize(outRay.origin - circle.pos)
 
 func support*(circle: Circle; dir: Vec2): Vec2 =
   result = circle.pos + (dir * circle.radius)
 
-proc `*`*(m: Mat3; hull: open_array[Vec2]): seq[Vec2] =
-  result = new_seq[Vec2](len(hull))
+proc `*`*(m: Mat3; hull: openArray[Vec2]): seq[Vec2] =
+  result = newSeq[Vec2](len(hull))
   for i, point in hull: result[i] = m * point
 
-proc transform*(m: Mat3; hull: open_array[Vec2]; dest: var open_array[Vec2]) =
+proc transform*(m: Mat3; hull: openArray[Vec2]; dest: var openArray[Vec2]) =
   for i in 0 ..< len(hull):
     dest[i] = m * hull[i]
 
-proc point_cloud_size*(points: open_array[Vec2]): Vec2 =
+proc pointCloudSize*(points: openArray[Vec2]): Vec2 =
   var maxp = low(Vec2)
   var minp = high(Vec2)
   for point in points:

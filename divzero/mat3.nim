@@ -83,7 +83,7 @@ proc linearInverse*(m: Mat3): Mat3 =
   ## returns inverse of matrix
   result.x = vec2(m.y.y, -m.x.y)
   result.y = vec2(-m.y.x, m.x.x)
-  let invDet = 1f / basis_det(m)
+  let invDet = 1f / basisDet(m)
   result.x = result.x * invDet
   result.y = result.y * invDet
   result.t = vec2(0f, 0f)
