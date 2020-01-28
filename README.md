@@ -14,9 +14,9 @@ A simple vector math library for computer graphics.
 import divzero / [vec2, mat3]
 
 let a = vec2(1f, 2f) # (1, 2) vector
-let m = mat3_t(10f, 20f) # translation matrix
-echo m * a #  (11, 22)
-echo mat3_t(1f, 2f) * mat3_r(1f) * mat3_s(0.5f) * vec2(1, 2) # scale rotate and translate vector
+let m = mat3T(10f, 20f) # build translation matrix
+echo m * a # (11, 22)
+echo mat3T(1f, 2f) * mat3R(1f) * mat3S(0.5f) * vec2(1, 2) # scale rotate and translate vector
 ```
 ### shapes
 ```nim
@@ -33,8 +33,8 @@ echo manifold # (hit: true, normal: (x: -1.0, y: 0.0), depth: 1.0)
 import divzero / [mat4, vec4]
 
 let P = persp(45f, 4f / 3f, 0.1f, 100f)
-let V = view_look_at(vec4(4f, 3f, 3f, 1f), vec4(1f, 2f, 3f, 1f), vec4(0f, 1f, 0f, 0f))
-let M = mat4_t(vec4(1f, 2f, 3f, 0f)) * mat4_rz(0.5f) * mat4_s(vec4(2f, 2f, 2f, 0f))
+let V = viewLookAt(vec4(4f, 3f, 3f, 1f), vec4(1f, 2f, 3f, 1f), vec4(0f, 1f, 0f, 0f))
+let M = mat4T(vec4(1f, 2f, 3f, 0f)) * mat4RZ(0.5f) * mat4S(vec4(2f, 2f, 2f, 0f))
 let PVM = P * V * M * vec4(0f, 0f, 0f, 1f)
 ```
 
