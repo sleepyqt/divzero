@@ -40,8 +40,8 @@ proc initImage*(width, height: int32; format: ImageFormat; data: pointer; rowAli
   result.size   = result.pitch * result.height
   result.data   = data
 
-proc allocImage*(width, height: int32; format: ImageFormat): Image2d =
-  result = initImage(width, height, format, nil)
+proc allocImage*(width, height: int32; format: ImageFormat; rowAlignment = 4): Image2d =
+  result = initImage(width, height, format, nil, rowAlignment)
   result.data = alloc(result.size)
 
 proc destroy*(image: var Image2d) =
@@ -53,6 +53,8 @@ proc inBounds*(image: Image2d; x, y: int32): bool =
 
 proc row*(image: Image2d; y: int; T: typedesc): ptr UncheckedArray[T] =
   cast[ptr UncheckedArray[T]](cast[int](image.data) + y * image.pitch)
+
+# Gray 8
 
 proc setPixelGray8*(image: var Image2d; x, y: int32; color: uint8) =
   assert(inBounds(image, x, y))
@@ -86,6 +88,8 @@ proc clearGray8*(image: var Image2d; color: uint8) =
   for p in mpixelsGray8(image):
     p = color
 
+# Gray 16
+
 proc setPixelGray16*(image: var Image2d; x, y: int32; color: uint16) =
   assert(inBounds(image, x, y))
   image.row(y, uint16)[x] = color
@@ -118,6 +122,8 @@ proc clearGray16*(image: var Image2d; color: uint16) =
   for p in mpixelsGray16(image):
     p = color
 
+# ABGR 8888
+
 proc setPixelAbgr8888*(image: var Image2d; x, y: int32; color: uint32) =
   assert(inBounds(image, x, y))
   image.row(y, uint32)[x] = color
@@ -149,6 +155,14 @@ iterator mPixelsAbgr8888*(image: var Image2d): var uint32 =
 proc clearAbgr8888*(image: var Image2d; color: uint32) =
   for p in mpixelsAbgr8888(image):
     p = color
+
+# BGR 888
+
+# sABGR 8888
+
+# sBGR 888
+
+# Generic
 
 proc setPixel*(image: var Image2d; x, y: int32; color: Color) =
   case image.format:
@@ -186,6 +200,50 @@ proc clear*(image: var Image2d; color: Color) =
 proc premultiplyAlpha*(image: var Image2d) =
   for x, y, color in image.xyPixels:
     image.setPixel(x, y, color.premultiply)
+
+proc drawLine*(image: var Image2d; x0, y0, x1, y1: int32; color: Color) =
+  var x0 = x0
+  var y0 = y0
+  let dx = abs(x1 - x0)
+  let sx = if x0 < x1: 1i32 else: -1i32
+  let dy = -abs(y1 - y0)
+  let sy = if y0 < y1: 1i32 else: -1i32
+  var err = dx + dy
+  while true:
+    image.setPixel(x0, y0, color)
+    if x0 == x1 and y0 == y1: break
+    let e2 = 2 * err
+    if e2 >= dy:
+      err += dy
+      x0 += sx
+    if e2 <= dx:
+      err += dx
+      y0 += sy
+
+proc drawCircle*(image: var Image2d; cx, cy, radius: int32; color: Color) =
+  ## renders circle centered at point cx, cy
+  var x0 = cx
+  var y0 = cy
+  var f = 1i32 - radius
+  var ddfX = 1i32
+  var ddfY = -2i32 * radius
+  var x = 0i32
+  var y = radius
+  image.setPixel(x0, y0 + radius, color)
+  image.setPixel(x0, y0 - radius, color)
+  image.setPixel(x0 + radius, y0, color)
+  image.setPixel(x0 - radius, y0, color)
+  while x < y:
+    if f >= 0: (dec(y); inc(ddfY, 2); inc(f, ddfY))
+    inc(x); inc(ddfX, 2); inc(f, ddfX)
+    image.setPixel(x0 + x, y0 + y, color)
+    image.setPixel(x0 - x, y0 + y, color)
+    image.setPixel(x0 + x, y0 - y, color)
+    image.setPixel(x0 - x, y0 - y, color)
+    image.setPixel(x0 + y, y0 + x, color)
+    image.setPixel(x0 - y, y0 + x, color)
+    image.setPixel(x0 + y, y0 - x, color)
+    image.setPixel(x0 - y, y0 - x, color)
 
 when isMainModule:
   block:
