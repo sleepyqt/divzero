@@ -7,6 +7,8 @@ type
 
   SrgbColor* = Color
 
+  BlendFn* = proc (s, d: Color): Color
+
 func color*(r, g, b, a: float32): Color {.inline.} =
   result = Color(r: r, g: g, b: b, a: a)
 
@@ -52,6 +54,18 @@ func alpha*(c: Color; v: float32): Color =
   result.g = c.g
   result.b = c.b
   result.a = c.a * v
+
+func blendStraightAlpha*(s, d: Color): Color =
+  result.r = (s.r * s.a) + (d.r * (1f - s.a))
+  result.g = (s.g * s.a) + (d.g * (1f - s.a))
+  result.b = (s.b * s.a) + (d.b * (1f - s.a))
+  result.a = (s.a * s.a) + 1f - s.a
+
+func blendPremultiplyAlpha*(s, d: Color): Color =
+  result.r = s.r + (d.r * (1f - s.a))
+  result.g = s.g + (d.g * (1f - s.a))
+  result.b = s.b + (d.b * (1f - s.a))
+  result.a = s.a + 1f - s.a
 
 func blendMultiply*(x, y: Color): Color =
   result.r = x.r * y.r

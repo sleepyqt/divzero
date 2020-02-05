@@ -171,12 +171,30 @@ proc setPixel*(image: var Image2d; x, y: int32; color: Color) =
   of IfAbgr8888: image.setPixelAbgr8888(x, y, color.encodeAbgr8888)
   else: doAssert(false, "setPixel: unsupported image format")
 
-proc getPixel*(image: var Image2d; x, y: int32): Color =
+proc getPixel*(image: Image2d; x, y: int32): Color =
   case image.format:
   of IfGray8:    result = image.getPixelGray8(x, y).decodeGray8.color
   of IfGray16:   result = image.getPixelGray16(x, y).decodeGray16.color
   of IfAbgr8888: result = image.getPixelAbgr8888(x, y).decodeAbgr8888
   else: doAssert(false, "getPixel: unsupported image format")
+
+proc setPixelSafe*(image: var Image2d; x, y: int32; color: Color) =
+  if image.inBounds(x, y):
+    image.setPixel(x, y, color)
+
+proc getPixelSafe*(image: Image2d; x, y: int32): Color =
+  if image.inBounds(x, y):
+    result = image.getPixel(x, y)
+  else:
+    result = colorBlue
+
+proc blendPixel*(image: var Image2d; x, y: int32; src: Color; blend: BlendFn) =
+  let dst = image.getPixel(x, y)
+  image.setPixel(x, y, blend(s = src, d = dst))
+
+proc blendPixelSafe*(image: var Image2d; x, y: int32; color: Color; blend: BlendFn) =
+  if image.inBounds(x, y):
+    image.blendPixel(x, y, color, blend)
 
 iterator xyPixels*(image: Image2d): (int32, int32, Color) =
   case image.format:
@@ -209,8 +227,9 @@ proc drawLine*(image: var Image2d; x0, y0, x1, y1: int32; color: Color) =
   let dy = -abs(y1 - y0)
   let sy = if y0 < y1: 1i32 else: -1i32
   var err = dx + dy
+  let color = color.premultiply
   while true:
-    image.setPixel(x0, y0, color)
+    image.blendPixelSafe(x0, y0, color, blendPremultiplyAlpha)
     if x0 == x1 and y0 == y1: break
     let e2 = 2 * err
     if e2 >= dy:
@@ -229,21 +248,32 @@ proc drawCircle*(image: var Image2d; cx, cy, radius: int32; color: Color) =
   var ddfY = -2i32 * radius
   var x = 0i32
   var y = radius
-  image.setPixel(x0, y0 + radius, color)
-  image.setPixel(x0, y0 - radius, color)
-  image.setPixel(x0 + radius, y0, color)
-  image.setPixel(x0 - radius, y0, color)
+  let color = color.premultiply
+  image.blendPixelSafe(x0, y0 + radius, color, blendPremultiplyAlpha)
+  image.blendPixelSafe(x0, y0 - radius, color, blendPremultiplyAlpha)
+  image.blendPixelSafe(x0 + radius, y0, color, blendPremultiplyAlpha)
+  image.blendPixelSafe(x0 - radius, y0, color, blendPremultiplyAlpha)
   while x < y:
     if f >= 0: (dec(y); inc(ddfY, 2); inc(f, ddfY))
     inc(x); inc(ddfX, 2); inc(f, ddfX)
-    image.setPixel(x0 + x, y0 + y, color)
-    image.setPixel(x0 - x, y0 + y, color)
-    image.setPixel(x0 + x, y0 - y, color)
-    image.setPixel(x0 - x, y0 - y, color)
-    image.setPixel(x0 + y, y0 + x, color)
-    image.setPixel(x0 - y, y0 + x, color)
-    image.setPixel(x0 + y, y0 - x, color)
-    image.setPixel(x0 - y, y0 - x, color)
+    image.blendPixelSafe(x0 + x, y0 + y, color, blendPremultiplyAlpha)
+    image.blendPixelSafe(x0 - x, y0 + y, color, blendPremultiplyAlpha)
+    image.blendPixelSafe(x0 + x, y0 - y, color, blendPremultiplyAlpha)
+    image.blendPixelSafe(x0 - x, y0 - y, color, blendPremultiplyAlpha)
+    image.blendPixelSafe(x0 + y, y0 + x, color, blendPremultiplyAlpha)
+    image.blendPixelSafe(x0 - y, y0 + x, color, blendPremultiplyAlpha)
+    image.blendPixelSafe(x0 + y, y0 - x, color, blendPremultiplyAlpha)
+    image.blendPixelSafe(x0 - y, y0 - x, color, blendPremultiplyAlpha)
+
+proc fillRectangle*(image: var Image2d; x, y, w, h: int32; color: Color) =
+  let x0 = max(x, 0)
+  let y0 = max(y, 0)
+  let x1 = min(x + w - 1, image.width - 1)
+  let y1 = min(y + h - 1, image.height - 1)
+  let color = color.premultiply
+  for x in x0 .. x1:
+    for y in y0 .. y1:
+      image.blendPixel(x, y, color, blendPremultiplyAlpha)
 
 when isMainModule:
   block:
