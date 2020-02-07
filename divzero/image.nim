@@ -186,7 +186,7 @@ proc getPixelSafe*(image: Image2d; x, y: int32): Color =
   if image.inBounds(x, y):
     result = image.getPixel(x, y)
   else:
-    result = colorBlue
+    result = color(0f, 0f, 0f, 0f)
 
 proc blendPixel*(image: var Image2d; x, y: int32; src: Color; blend: BlendFn) =
   let dst = image.getPixel(x, y)
@@ -271,9 +271,14 @@ proc fillRectangle*(image: var Image2d; x, y, w, h: int32; color: Color) =
   let x1 = min(x + w - 1, image.width - 1)
   let y1 = min(y + h - 1, image.height - 1)
   let color = color.premultiply
-  for x in x0 .. x1:
-    for y in y0 .. y1:
-      image.blendPixel(x, y, color, blendPremultiplyAlpha)
+  if color.a >= 0.99f:
+    for x in x0 .. x1:
+      for y in y0 .. y1:
+        image.setPixel(x, y, color)
+  else:
+    for x in x0 .. x1:
+      for y in y0 .. y1:
+        image.blendPixel(x, y, color, blendPremultiplyAlpha)
 
 when isMainModule:
   block:

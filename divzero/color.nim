@@ -128,10 +128,10 @@ func encodeAbgr8888*(color: Color): uint32 =
 
 func decodeAbgr8888*(color: uint32): Color =
   # 0xAA-BB-GG-RR
-  let r: uint32 = (color shr 00) and 0x00_00_00_FFu32
-  let g: uint32 = (color shr 08) and 0x00_00_00_FFu32
-  let b: uint32 = (color shr 16) and 0x00_00_00_FFu32
-  let a: uint32 = (color shr 24) and 0x00_00_00_FFu32
+  let r: uint32 = (color shr 00u32) and 0x00_00_00_FFu32
+  let g: uint32 = (color shr 08u32) and 0x00_00_00_FFu32
+  let b: uint32 = (color shr 16u32) and 0x00_00_00_FFu32
+  let a: uint32 = (color shr 24u32) and 0x00_00_00_FFu32
   const inv = 1f / 255f
   result.r = float32(r) * inv
   result.g = float32(g) * inv
