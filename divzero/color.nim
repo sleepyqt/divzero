@@ -13,6 +13,7 @@ func color*(r, g, b, a: float32): Color {.inline.} =
   result = Color(r: r, g: g, b: b, a: a)
 
 func color*(hex: uint32): Color {.inline.} =
+  ## 0xRRGGBBAA
   let r = uint8((hex and 0xFF_00_00_00u32) shr 24)
   let g = uint8((hex and 0x00_FF_00_00u32) shr 16)
   let b = uint8((hex and 0x00_00_FF_00u32) shr 8)
@@ -116,7 +117,7 @@ func toSrgb*(color: Color): SrgbColor =
   result.b = to_srgb(color.b)
   result.a = color.a
 
-func encodeAbgr8888*(color: Color): uint32 =
+func encodeA8B8G8R8*(color: Color): uint32 =
   # layout:
   #  MSB       LSB
   #  0xAA-BB-GG-RR
@@ -126,36 +127,36 @@ func encodeAbgr8888*(color: Color): uint32 =
   let a: uint32 = (uint32(color.a * 255f) shl 24) and 0xFF_00_00_00u32
   result = r or g or b or a
 
-func decodeAbgr8888*(color: uint32): Color =
+func decodeA8B8G8R8*(color: uint32): Color =
   # 0xAA-BB-GG-RR
-  let r: uint32 = (color shr 00u32) and 0x00_00_00_FFu32
-  let g: uint32 = (color shr 08u32) and 0x00_00_00_FFu32
-  let b: uint32 = (color shr 16u32) and 0x00_00_00_FFu32
-  let a: uint32 = (color shr 24u32) and 0x00_00_00_FFu32
+  let r: uint32 = (color shr 00u32) and 0xFFu32
+  let g: uint32 = (color shr 08u32) and 0xFFu32
+  let b: uint32 = (color shr 16u32) and 0xFFu32
+  let a: uint32 = (color shr 24u32) and 0xFFu32
   const inv = 1f / 255f
   result.r = float32(r) * inv
   result.g = float32(g) * inv
   result.b = float32(b) * inv
   result.a = float32(a) * inv
 
-func encodeBgr888*(color: Color): uint32 =
+func encodeB8G8R8*(color: Color): uint32 =
   # layout: 0xBB-GG-RR
-  let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_00_FFu32
-  let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_00_FF_00u32
-  let b: uint32 = (uint32(color.b * 255f) shl 16) and 0x00_FF_00_00u32
+  let r: uint32 = (uint32(color.r * 255f) shl 00) and 0x00_00_FFu32
+  let g: uint32 = (uint32(color.g * 255f) shl 08) and 0x00_FF_00u32
+  let b: uint32 = (uint32(color.b * 255f) shl 16) and 0xFF_00_00u32
   result = r or g or b
 
-func decodeBgr888*(color: uint32): Color =
-  let r: uint32 = (color shr 24) and 0x00_00_00_FFu32
-  let g: uint32 = (color shr 16) and 0x00_00_00_FFu32
-  let b: uint32 = (color shr 08) and 0x00_00_00_FFu32
+func decodeB8G8R8*(color: uint32): Color =
+  let r: uint32 = (color shr 24) and 0xFFu32
+  let g: uint32 = (color shr 16) and 0xFFu32
+  let b: uint32 = (color shr 08) and 0xFFu32
   const inv = 1f / 255f
   result.r = float32(r) * inv
   result.g = float32(g) * inv
   result.b = float32(b) * inv
   result.a = 1f
 
-func encodeRgba8888*(color: Color): uint32 =
+func encodeR8G8B8A8*(color: Color): uint32 =
   # layout:
   #  MSB       LSB
   #  0xRR-GG-BB-AA
@@ -165,11 +166,11 @@ func encodeRgba8888*(color: Color): uint32 =
   let a: uint32 = (uint32(color.a * 255f) shl 00) and 0x00_00_00_FFu32
   result = r or g or b or a
 
-func decodeRgba8888*(color: uint32): Color =
-  let r: uint32 = (color shr 00) and 0x00_00_00_FFu32
-  let g: uint32 = (color shr 08) and 0x00_00_00_FFu32
-  let b: uint32 = (color shr 16) and 0x00_00_00_FFu32
-  let a: uint32 = (color shr 24) and 0x00_00_00_FFu32
+func decodeR8G8B8A8*(color: uint32): Color =
+  let r: uint32 = (color shr 00) and 0xFFu32
+  let g: uint32 = (color shr 08) and 0xFFu32
+  let b: uint32 = (color shr 16) and 0xFFu32
+  let a: uint32 = (color shr 24) and 0xFFu32
   const inv = 1f / 255f
   result.r = float32(r) * inv
   result.g = float32(g) * inv
